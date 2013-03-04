@@ -1,0 +1,1 @@
+web: alerting/bin/web.sh

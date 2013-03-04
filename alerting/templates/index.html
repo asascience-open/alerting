@@ -1,0 +1,182 @@
+{% extends "layout.html" %}
+{% block javascript %}
+    {{ super() }}
+    <script type="text/javascript">
+
+        function buildAlert(alert) {
+            var root = $("<li />").append($("<span />").html(alert.name));
+
+            // If there is a station link, create the link
+            if (alert.station.link != "") {
+                root.append($("<a />")
+                .attr("href", alert.station.link)
+                .attr("target", "_blank")
+                .html(alert.station.description))
+            } else {
+                root.append($("<span />").html(alert.station.description));
+            }
+
+            // Add delete link
+            root.append($("<a />")
+                .attr("class", "removal")
+                .attr("href", alert.destroy_url)
+                .html("Delete"));
+
+            // Add conditions
+            var ul = $("<ul />")
+            for (var j = 0 ; j < alert.conditions.length ; j++) {
+                ul.append(buildCondition(alert.conditions[j]));
+            }
+
+            // Add the "Add new condition" form
+            ul.append(buildAddCondition(alert));
+
+            return root.append(ul);
+        }
+
+        function buildCondition(cond) {
+            var root = $("<li />")
+                            .html(cond.variable + " " + cond.comparator + " " + cond.value)
+                            .append($("<a />")
+                                .attr("class", "removal")
+                                .attr("href", cond.destroy_url)
+                                .html("Delete"));
+            return root;
+        }
+
+        function buildAddCondition(alert) {
+            var root = $("<form />").attr("name", alert._id).append($("<span />").html("Add condition: "))
+
+            var variable = $()
+                            .add($("<select />")
+                                .attr("name", "variable"));
+
+            $.each(alert.station.timeseries, function(k,v) {
+                variable.append($("<option />")
+                                    .attr("value", k)
+                                    .html(k))
+            });
+
+            var comparator = $()
+                            .add($("<select />")
+                                .attr("name", "comparator")
+                                .append($("<option />")
+                                    .attr("value", "<=")
+                                    .html("<="))
+                                .append($("<option />")
+                                    .attr("value", ">=")
+                                    .html(">="))
+                                .append($("<option />")
+                                    .attr("value", "=")
+                                    .html("="))
+                            );
+
+            var value = $()
+                            .add($("<input />")
+                                .attr("name", "value")
+                                .attr("type", "textfield"));
+
+            var add = $("<a />")
+                            .attr("class", "adder")
+                            .attr("href", alert.new_condition_url)
+                            .attr("id", alert._id)
+                            .html("Add");
+
+            return root.append(variable).append(comparator).append(value).append(add);
+        }
+
+        function linkify() {
+            $(".removal").unbind();
+            $(".removal").click(function(e) {
+                e.preventDefault();
+                var link =  $(this);
+                $.post(link.attr("href")
+                    ,null
+                    ,function() {
+                        link.parent().remove();
+                    }
+                );
+            });
+
+            $(".adder").unbind();
+            $(".adder").click(function(e) {
+                e.preventDefault();
+                var link =  $(this);
+                $.post(link.attr("href")
+                    ,$("form[name=" + link.attr("id") + "]").serialize()
+                    ,function(condition) {
+                        if (condition["error"]) {
+                            $("#messages").html("<div class='flash'>" + condition["error"] + "</div>");
+                        } else {
+                            $("form[name=" + link.attr("id") + "]").before(buildCondition(condition));
+                        }
+                        linkify();
+                    }
+                );
+            });
+        }
+
+        function showAlerts() {
+            $.get("{{ url_for('alerts') }}", function(alerts) {
+                alerts = alerts["alerts"];
+                for (var i = 0 ; i < alerts.length ; i++) {
+                    $("#alerts").append(buildAlert(alerts[i]));
+                }
+                linkify();
+            });
+        }
+
+        function addAlert(alert) {
+            if (alert["error"]) {
+               $("#messages").html("<div class='flash'>" + alert["error"] + "</div>");
+            } else {
+                $("#alerts").append(buildAlert(alert));
+            }
+            linkify();
+        }
+
+        $(document).ready(function() {
+            {%- if session.get('user_email', None) -%}
+                showAlerts();
+            
+                $("#create").click(function() {
+
+                    $.post("{{ url_for('new_alert') }}", 
+                        $("#alert_form").serialize(),
+                        function(alert) {
+                            addAlert(alert);
+                        }
+                    );
+                });
+            {%- endif -%}
+        });
+    </script>
+{% endblock %}
+{% block page %}
+
+    {%- if session.get('user_email', None) -%}
+        <h2>Alerts</h2>
+        <ul id="alerts"></ul>
+
+        <h2>Create alert</h2>
+            <form id="alert_form">
+                <label for="name">Name</label>
+                <input type="textfield" id="name" name="name" />
+
+                <br />
+
+                <label for="station_id">Station</label>
+                <select id="station_id" name="station_id">
+                {%- for station in stations -%}
+                    <option value="{{ station._id }}">{{ station.provider}} - {{ station.description }}</option>
+                {%- endfor -%}
+                </select>
+            </form>
+
+            <br />
+
+            <button name="create" id="create">Create Alert</button>
+
+    {%- endif -%}
+
+{% endblock %}

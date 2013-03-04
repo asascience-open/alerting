@@ -1,0 +1,43 @@
+<!doctype html>
+<head>
+    <title>Alerting</title>
+    {% block javascript %}
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    {% endblock %}
+    {% block css %}
+        <link rel=stylesheet type=text/css href="{{ url_for('.static', filename='style.css') }}" />
+    {% endblock %}
+</head>
+<body>
+    {% block body %}
+
+        <div>
+            {% if session.get('user_email', None) %}
+                <a href="{{ url_for('logout') }}">sign out</a>
+            {% endif %}
+        </div>
+
+        <div id="messages">
+            {%- for message in get_flashed_messages() -%}
+                <div class='flash'>{{ message }}</div>
+            {%- endfor -%}
+        </div>
+
+        {% if not session.get('user_email', None) %}
+            <div>
+                <a href="{{ url_for('login_google') }}">
+                    <img src="{{ url_for('.static', filename='images/google.png') }}" />
+                    <p>sign in with google</p>
+                </a>
+                <a href="{{ url_for('login_facebook') }}">
+                    <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
+                    <p>sign in with facebook</p>
+                </a>
+            </div>
+        {% endif %}
+
+        <div class='content'>
+            {% block page %}{% endblock %}
+        </div>
+    {% endblock %}
+</body>
