@@ -62,7 +62,6 @@ def google_authorized(resp):
     try:
         res = urlopen(req)
         session['user_email'] = loads(res.read()).get(u'email')
-        print session['user_email']
         flash("Signed in as %s" % session.get('user_email'))
         next_url = request.referrer or url_for('index')
         return redirect(next_url)

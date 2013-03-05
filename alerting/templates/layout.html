@@ -3,6 +3,7 @@
     <title>Alerting</title>
     {% block javascript %}
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script src="{{ url_for('.static', filename='jquery.sparkline.min.js') }}"></script>
     {% endblock %}
     {% block css %}
         <link rel=stylesheet type=text/css href="{{ url_for('.static', filename='style.css') }}" />

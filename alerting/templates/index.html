@@ -4,6 +4,7 @@
     <script type="text/javascript">
 
         function buildAlert(alert) {
+
             var root = $("<li />").append($("<span />").html(alert.name));
 
             // If there is a station link, create the link
@@ -15,6 +16,8 @@
             } else {
                 root.append($("<span />").html(alert.station.description));
             }
+
+            root.append($("<span />").html("Last checked: " + alert.checked));
 
             // Add delete link
             root.append($("<a />")
@@ -35,54 +38,77 @@
         }
 
         function buildCondition(cond) {
+
+            data = cond['timeseries']['v']
+
             var root = $("<li />")
-                            .html(cond.variable + " " + cond.comparator + " " + cond.value)
-                            .append($("<a />")
-                                .attr("class", "removal")
-                                .attr("href", cond.destroy_url)
-                                .html("Delete"));
+                            .html(cond.variable + " " + cond.comparator + " " + cond.value);
+
+            for (key in data) {
+
+                var linechart = $("<span>&nbsp;</span");
+                linechart.sparkline(data[key],{ type: 'line' });
+
+                root.append(linechart);
+            }
+
+            $.sparkline_display_visible();
+                            
+            root.append($("<a />")
+                            .attr("class", "removal")
+                            .attr("href", cond.destroy_url)
+                            .html("Delete")
+                        );
+
             return root;
         }
 
         function buildAddCondition(alert) {
-            var root = $("<form />").attr("name", alert._id).append($("<span />").html("Add condition: "))
 
-            var variable = $()
-                            .add($("<select />")
-                                .attr("name", "variable"));
+            if (alert.station.variables.length < 1) {
+                return $("<span />").html("Station not reporting, please check back at a later time to add more alerts")
+            } else {
 
-            $.each(alert.station.timeseries, function(k,v) {
-                variable.append($("<option />")
-                                    .attr("value", k)
-                                    .html(k))
-            });
+                var root = $("<form />").attr("name", alert._id).append($("<span />").html("Add condition: "))
 
-            var comparator = $()
-                            .add($("<select />")
-                                .attr("name", "comparator")
-                                .append($("<option />")
-                                    .attr("value", "<=")
-                                    .html("<="))
-                                .append($("<option />")
-                                    .attr("value", ">=")
-                                    .html(">="))
-                                .append($("<option />")
-                                    .attr("value", "=")
-                                    .html("="))
-                            );
+                var variable = $()
+                                .add($("<select />")
+                                    .attr("name", "variable"));
 
-            var value = $()
-                            .add($("<input />")
-                                .attr("name", "value")
-                                .attr("type", "textfield"));
 
-            var add = $("<a />")
-                            .attr("class", "adder")
-                            .attr("href", alert.new_condition_url)
-                            .attr("id", alert._id)
-                            .html("Add");
+                $.each(alert.station.variables, function(k,v) {
+                    variable.append($("<option />")
+                                        .attr("value", v)
+                                        .html(v))
+                });
 
-            return root.append(variable).append(comparator).append(value).append(add);
+                var comparator = $()
+                                .add($("<select />")
+                                    .attr("name", "comparator")
+                                    .append($("<option />")
+                                        .attr("value", "<=")
+                                        .html("<="))
+                                    .append($("<option />")
+                                        .attr("value", ">=")
+                                        .html(">="))
+                                    .append($("<option />")
+                                        .attr("value", "=")
+                                        .html("="))
+                                );
+
+                var value = $()
+                                .add($("<input />")
+                                    .attr("name", "value")
+                                    .attr("type", "textfield"));
+
+                var add = $("<a />")
+                                .attr("class", "adder")
+                                .attr("href", alert.new_condition_url)
+                                .attr("id", alert._id)
+                                .html("Add");
+
+                return root.append(variable).append(comparator).append(value).append(add);
+            }
         }
 
         function linkify() {

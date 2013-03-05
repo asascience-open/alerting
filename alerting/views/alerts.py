@@ -17,18 +17,23 @@ def alerts():
     new_alerts = []
 
     for a in alerts:
-        station = json.loads(json.dumps(db.Station.find_one( { '_id' : a.station_id } ), default=json_util.default))
+        station_object = a.station()
+        station = json.loads(json.dumps(station_object, default=json_util.default))
         del station['updated']
         del station['created']
         del station['_id']
         del station['last_obs']
+        del station['timeseries']
         del station['type']
+        station['variables'] = station_object.variables()
         a['station'] = station
+        a['checked'] = a.user_friendly_checked()
         a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
         a['new_condition_url'] = url_for('new_condition', alert_id=a['_id'])
 
         for c in a.conditions:
             c['destroy_url'] = url_for('destroy_condition', alert_id=a['_id'], condition_id=c['_id'])
+            c['timeseries'] = station_object.timeseries.get(c.get('variable'))
 
         new_alerts.append(a)
 
@@ -40,22 +45,30 @@ def new_alert():
 
     alert = db.Alert()
     alert.email = user
-    alert.name = request.form.get("name", "Alert")
+    alert.name = request.form.get("name", "")
+    if alert.name == "":
+        alert.name = u"Unnamed Alert"
+
     alert.station_id = ObjectId(request.form.get("station_id"))
     try:
         alert.save()
     except Exception as e:
+        app.logger.warn(e.message)
         alert = { "error" : e.message }
 
-    station = json.loads(json.dumps(db.Station.find_one( { '_id' : alert.station_id } ), default=json_util.default))
+    station_object = alert.station()
+    station = json.loads(json.dumps(station_object, default=json_util.default))
     del station['updated']
     del station['created']
     del station['_id']
     del station['last_obs']
+    del station['timeseries']
     del station['type']
+    station['variables'] = station_object.variables()
     alert['station'] = station
-    a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
-    a['new_condition_url'] = url_for('new_condition', alert_id=a['_id'])
+    alert['checked'] = alert.user_friendly_checked()
+    alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
+    alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
 
     return jsonify(alert)
 
@@ -96,6 +109,8 @@ def new_condition(alert_id):
         alert.save()
 
         c['destroy_url'] = url_for('destroy_condition', alert_id=alert['_id'], condition_id=c['_id'])
+        c['timeseries'] = alert.station().timeseries.get(c.variable)
+
         del c['updated']
         del c['_id']
         
@@ -125,3 +140,13 @@ def destroy_condition(alert_id, condition_id):
             return jsonify({"message" : "success"})
 
         return jsonify({"message" : "No condition found with that ID"})
+
+@app.route('/clear')
+def clear():
+    user = session.get('user_email', None)
+    if user == "wilcox.kyle@gmail.com":
+        db.drop_collection('alerts')
+        db.drop_collection('conditions')
+        return jsonify({ "message" : "ok" })
+    else:
+        return jsonify({ "error" : "permission denied" })

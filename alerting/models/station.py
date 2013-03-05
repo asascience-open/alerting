@@ -29,6 +29,13 @@ class Station(Document):
     required_fields = ['latitude', 'longitude', 'geometry','timeseries','provider','created', 'updated']
     default_values = { 'created': datetime.utcnow, 'updated': datetime.utcnow }
 
+    def variables(self):
+        if self.timeseries:
+            return self.timeseries.keys()
+        else:
+         return []
+
+
     def coordinates(self):
         try:
             geo = loads(self.geometry)

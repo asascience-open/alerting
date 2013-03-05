@@ -3,3 +3,4 @@ Flask-MongoKit
 git+http://github.com/mitsuhiko/flask-oauth.git#egg=Flask-OAuth
 gunicorn
 Shapely
+ago
