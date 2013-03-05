@@ -1,1 +1,1 @@
-from alerting.views import session, index, alerts
+from alerting.views import session, index, alerts, stations

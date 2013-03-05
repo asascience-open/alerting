@@ -29,12 +29,26 @@ class Station(Document):
     required_fields = ['latitude', 'longitude', 'geometry','timeseries','provider','created', 'updated']
     default_values = { 'created': datetime.utcnow, 'updated': datetime.utcnow }
 
-    def variables(self):
-        if self.timeseries:
-            return self.timeseries.keys()
-        else:
-         return []
+    fill_values = ["-999999", -999999]
 
+    def variables(self):
+        variables = {}
+
+        #app.logger.info(self.timeseries)
+
+        if self.timeseries:
+            for k,v in self.timeseries.items():
+                if not isinstance(self.timeseries[k], list):
+                    units = self.timeseries[k][u'v'].keys()
+                    variables[k] = units
+        
+        return variables
+
+    def data(self, variable=None, units=None):
+        if self.timeseries and variable is not None and units is not None:
+            return [float(x) for x in self.timeseries[variable][u'v'][units] if x not in Station.fill_values]
+        else:
+            return []
 
     def coordinates(self):
         try:

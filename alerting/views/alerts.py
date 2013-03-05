@@ -12,28 +12,19 @@ from alerting.models.alert import Alert
 @app.route('/alerts', methods=['GET'])
 def alerts():
     user = session.get('user_email', None)
-    alerts = db.Alert.find({ 'email' : user })[:]
+    alerts = db.Alert.find({ 'email' : user })
 
     new_alerts = []
 
     for a in alerts:
-        station_object = a.station()
-        station = json.loads(json.dumps(station_object, default=json_util.default))
-        del station['updated']
-        del station['created']
-        del station['_id']
-        del station['last_obs']
-        del station['timeseries']
-        del station['type']
-        station['variables'] = station_object.variables()
-        a['station'] = station
         a['checked'] = a.user_friendly_checked()
         a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
         a['new_condition_url'] = url_for('new_condition', alert_id=a['_id'])
 
         for c in a.conditions:
             c['destroy_url'] = url_for('destroy_condition', alert_id=a['_id'], condition_id=c['_id'])
-            c['timeseries'] = station_object.timeseries.get(c.get('variable'))
+            c['timeseries'] = c.data()
+            c['station_id'] = c.station()['_id']
 
         new_alerts.append(a)
 
@@ -49,23 +40,12 @@ def new_alert():
     if alert.name == "":
         alert.name = u"Unnamed Alert"
 
-    alert.station_id = ObjectId(request.form.get("station_id"))
     try:
         alert.save()
     except Exception as e:
         app.logger.warn(e.message)
         alert = { "error" : e.message }
 
-    station_object = alert.station()
-    station = json.loads(json.dumps(station_object, default=json_util.default))
-    del station['updated']
-    del station['created']
-    del station['_id']
-    del station['last_obs']
-    del station['timeseries']
-    del station['type']
-    station['variables'] = station_object.variables()
-    alert['station'] = station
     alert['checked'] = alert.user_friendly_checked()
     alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
     alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
@@ -102,17 +82,22 @@ def new_condition(alert_id):
         except ValueError:
             return jsonify({ "error" : "Must enter a number as the value" })
         c.variable = request.form.get("variable")
+        c.units = request.form.get("units")
         c.comparator = request.form.get("comparator")
-        c.save()
+        c.station_id = ObjectId(request.form.get("station"))
+        try:
+            c.save()
+        except:
+            return jsonify({ "error" : "Error saving conditon, please check inputs" })
 
         alert.conditions.append(c)
         alert.save()
 
         c['destroy_url'] = url_for('destroy_condition', alert_id=alert['_id'], condition_id=c['_id'])
-        c['timeseries'] = alert.station().timeseries.get(c.variable)
+        c['timeseries'] = c.data()
+        c['station_id'] = c.station()['_id']
 
         del c['updated']
-        del c['_id']
         
         return jsonify(c)
 

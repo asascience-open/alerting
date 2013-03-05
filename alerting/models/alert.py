@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 
 from ago import human
@@ -13,23 +13,27 @@ from shapely.geometry import Point
 
 class Alert(Document):
     __collection__ = 'alerts'
+    use_autorefs = True
     use_schemaless = True
     use_dot_notation = True
     structure = {
-        'name'              : unicode,  # Name of the dataset
-        'email'             : unicode,  # Email of the user who created the alert
+        'name'              : unicode,      # Name of the dataset
+        'email'             : unicode,      # Email of the user who created the alert
         'conditions'        : [Condition],
-        'station_id'        : ObjectId,
-        'created'           : datetime,
-        'updated'           : datetime,
-        'checked'           : datetime,
-        'sent'              : datetime
+        'created'           : datetime,     # when this alert was created
+        'updated'           : datetime, 
+        'checked'           : datetime,     # last time all of the conditions were checked
+        'sent'              : datetime,     # last time an alert was sent
+        'frequency'         : int           # number of minutes between alerts
     }
-    required_fields = ['email', 'station_id', 'created', 'updated']
-    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow }
+    required_fields = ['email', 'created', 'updated', 'frequency']
+    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 15 }
 
-    def station(self):
-        return db.Station.find_one({ '_id' : self.station_id })
+    def user_friendly_frequency(self):
+        if self.frequency:
+            return human(timedelta(minutes=self.frequency), past_tense='{}')
+        else:
+            return "never"
 
     def user_friendly_checked(self):
         if self.checked:
