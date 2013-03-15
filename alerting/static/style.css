@@ -4,10 +4,66 @@ html {
 
 body {
     margin: 0;
-    padding: 0;
+    padding: 35px 0 35px 0;
+    background-color: #0B5499;
 }
 
-content {
+#header {
     width: 960px;
     margin: 0 auto;
+    background: url('/static/images/header.jpg') no-repeat;
+    border: 1px solid #000000;
+    border-bottom: none;
+    height: 137px;
 }
+
+#messages {
+
+}
+
+    #messages .flash {
+        clear: both; 
+        background: #CEE5F5; 
+        padding: 0.5em; 
+        border: 1px solid #AACBE2;
+        width: 500px; 
+        margin: 10px auto; 
+        text-align: center;
+    }
+
+
+#content {
+    width: 960px;
+    margin: 0 auto;
+    padding: 20px 0px;
+    background: url('/static/images/bkgd.jpg') no-repeat;
+    border: 1px solid #000000;
+    border-top: none;
+}
+
+#wrapper {
+    padding: 0 30px;
+}
+
+#welcome {
+    padding: 30px 0;
+    line-height: 24px;
+    width: 700px;
+    margin: 0 auto;
+}
+
+    #welcome h2 {
+        font-size: 24px;
+        color: #0B5499;
+    }
+
+    #welcome #logins {
+        text-align: center;
+        width: 400px;
+        margin: 0 auto;
+    }
+
+    #welcome #logins a {
+        display: block;
+        padding: 10px;
+    }

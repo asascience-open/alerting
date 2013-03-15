@@ -246,14 +246,35 @@
         <ul id="alerts"></ul>
 
         <h2>Create alert</h2>
-            <form id="alert_form">
-                <label for="name">Name</label>
-                <input type="textfield" id="name" name="name" />
-            </form>
+        <form id="alert_form">
+            <label for="name">Name</label>
+            <input type="textfield" id="name" name="name" />
+        </form>
 
-            <br />
+        <br />
 
-            <button name="create" id="create">Create Alert</button>
+        <button name="create" id="create">Create Alert</button>
+
+    {%- else -%}
+
+        <div id='welcome'>
+            <h2>WELCOME!</h2>
+            <p>
+                GLOS Alerts allows you to create alerts with different variables related to the water temperature, salinity, wave height and direction. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+
+            <div id='logins'>
+                <a href="{{ url_for('login_google') }}">
+                    <img src="{{ url_for('.static', filename='images/google.png') }}" />
+                    <span>Login using your google account</span>
+                </a>
+                <a href="{{ url_for('login_facebook') }}">
+                    <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
+                    <span>Login using your facebook account</span>
+                </a>
+            </div>
+
+        </div>
 
     {%- endif -%}
 

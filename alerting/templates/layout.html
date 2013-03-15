@@ -12,33 +12,24 @@
 <body>
     {% block body %}
 
-        <div>
-            {% if session.get('user_email', None) %}
-                <a href="{{ url_for('logout') }}">sign out</a>
-            {% endif %}
-        </div>
+        <div id='header'></div>
 
-        <div id="messages">
-            {%- for message in get_flashed_messages() -%}
-                <div class='flash'>{{ message }}</div>
-            {%- endfor -%}
-        </div>
-
-        {% if not session.get('user_email', None) %}
-            <div>
-                <a href="{{ url_for('login_google') }}">
-                    <img src="{{ url_for('.static', filename='images/google.png') }}" />
-                    <p>sign in with google</p>
-                </a>
-                <a href="{{ url_for('login_facebook') }}">
-                    <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
-                    <p>sign in with facebook</p>
-                </a>
+        <div id='content'>
+            <div id="messages">
+                {%- for message in get_flashed_messages() -%}
+                    <div class='flash'>{{ message }}</div>
+                {%- endfor -%}
             </div>
-        {% endif %}
 
-        <div class='content'>
-            {% block page %}{% endblock %}
+            <div id='wrapper'>
+                {% if session.get('user_email', None) %}
+                    <div>Signed in as {{ session.get('user_email') }}</div>
+                    <a href="{{ url_for('logout') }}">sign out</a>
+                {% endif %}
+
+                {% block page %}{% endblock %}
+            </div>
         </div>
+
     {% endblock %}
 </body>

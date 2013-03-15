@@ -32,7 +32,8 @@ def facebook_authorized(resp):
     #request 'me' to get user id and email
     me = facebook.get('/me')
     session['user_email'] = me.data['email']
-    flash("Signed in as %s" % session.get('user_email'))
+    
+    #flash("Signed in as %s" % session.get('user_email'))
 
     next_url = request.args.get('next') or url_for('index')
     return redirect(next_url)
