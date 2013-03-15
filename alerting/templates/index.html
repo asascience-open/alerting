@@ -3,71 +3,110 @@
     {{ super() }}
     <script type="text/javascript">
 
-        var stations = []
+        var stations = [];
+        var accordion_options = { heightStyle: "content" };
 
-        function buildAlert(alert) {
+        function buildAlertHeader(alert) {
 
-            var root = $("<li />").append($("<span />").html(alert.name));
+            var del_link =  $("<a />")
+                                .html("Delete")
+                                .attr("class","alert_delete")
+                                .attr("href", alert.destroy_url)
+                                .on("click", function(e) {
+                                    e.preventDefault();
+                                    $.post(alert.destroy_url
+                                        ,null
+                                        ,function() {
+                                            var parent = $(e.currentTarget).closest('h3');
+                                            var head = parent.next('div');
+                                            head.add(parent).fadeOut('slow',function(){ $(e.currentTarget).remove(); });
+                                            $( "#alerts" ).accordion( "refresh" );
+                                        });
+                                    return false;
+                                });
 
-            root.append($("<span />").html("Last checked: " + alert.checked));
+            return $("<h3 />").append($("<span />").html(alert.name))
+                              .append(del_link)
+                              .append("<br />")
+                              .append($("<span />").attr('class','last_text').html("Last checked: " + alert.checked))
+                              .append("<br />")
+                              .append($("<span />").attr('class','last_text').html("Last notification sent: " + alert.sent))
+                              .append("<br />")
+                              .append($("<span />").attr('class','last_text').html("Notification of alert every: " + alert.frequency));
+        }
 
-            // Add delete link
-            root.append($("<a />")
-                .html("Delete")
-                .attr("href", alert.destroy_url)
-                .on("click", function(e) {
-                    e.preventDefault();
-                    $.post(alert.destroy_url
-                        ,null
-                        ,function() {
-                            $(e.currentTarget).parent().remove();
-                        }
-                    )}));
+        function buildAlertContents(alert) {
+
+            var content = $("<div />");  
 
             // Add conditions
             var ul = $("<ul />")
+            // this matches conditions with the correct station and lists them
+            // under the station headings.  this is ugly.
+            var last_station_id = null;
+            var last_station_dom = null;            
             for (var j = 0 ; j < alert.conditions.length ; j++) {
-                ul.append(buildCondition(alert.conditions[j]));
+                var this_station_id = alert.conditions[j].station_id;
+
+                if (this_station_id != last_station_id) {
+                    // Add the last station
+                    ul.append(last_station_dom);
+
+                    // Build station section
+                    last_station_dom = buildStationHeading(this_station_id);
+                    last_station_id = this_station_id;
+                }
+
+                last_station_dom.append(buildCondition(alert.conditions[j]));
             }
+            ul.append(last_station_dom);
+
             // Add the "Add new condition" form
             ul.append(buildAddCondition(alert));
 
-            root.append(ul);
+            content.append(ul);
 
-            return root.append(ul);
+            return content;
+        }
+
+        function buildStationHeading(station_id) {
+            station = findStationById(station_id);
+            var d = $('<li />').attr('id', station_id);             
+
+            // If there is a station link, create the link
+            if (station.link != "") {
+                d.append($("<a />")
+                .attr("href", station.link)
+                .attr("target", "_blank")
+                .html(station.provider + " - " + station.description))
+            } else {
+                d.append($("<span />").html(station.provider + " - " + station.description));
+            }
+
+            return d
         }
 
         function buildCondition(cond) {
 
             data = cond['timeseries'];
 
-            console.log(cond);
-
-            var root = $('<li />');
-
-            station = findStationById(cond.station_id);
-
-            // If there is a station link, create the link
-            if (station.link != "") {
-                root.append($("<a />")
-                .attr("href", station.link)
-                .attr("target", "_blank")
-                .html(station.provider + " - " + station.description))
-            } else {
-                root.append($("<span />").html(station.provider + " - " + station.description));
-            }
+            var root = $('<div />');
 
             root.append($("<span />").html(cond.variable + " (" + cond.units + ") " + cond.comparator + " " + cond.value));
             
-            var linechart = $("<span>&nbsp;</span");
-            linechart.sparkline(data, {
-                type: 'line',
-                width: '100',
-                lineColor: '#0000f0',
-                fillColor: '#c0d0f0',
-                spotRadius: 0,
-                lineWidth: 1,
-            });
+            var linechart = $("<span />");
+            if (data.length > 0) {
+                linechart.sparkline(data, {
+                    type: 'line',
+                    width: '150',
+                    height: '30',
+                    lineColor: '#0000f0',
+                    fillColor: '#c0d0f0',
+                    spotRadius: 0,
+                    lineWidth: 1,
+                });
+            }
+            linechart.css("width", "150px").html(" - No recent data - ")
 
             root.append(linechart);
 
@@ -78,7 +117,14 @@
                                 $.post(cond.destroy_url
                                     ,null
                                     ,function() {
-                                         $(e.currentTarget).parent().remove();
+                                        var station_div = $(e.currentTarget).parent().parent();
+                                        // Remove condition that was clicked
+                                        $(e.currentTarget).parent().remove();
+                                        // Remove station heading if there are no more conditions
+                                        if (station_div.find("div").length == 0) {
+                                            station_div.remove();
+                                        }
+                                        $( "#alerts" ).accordion( "refresh" );
                                     }
                                 )})
                         );
@@ -190,8 +236,15 @@
                                         if (condition["error"]) {
                                             $("#messages").html("<div class='flash'>" + condition["error"] + "</div>");
                                         } else {
-                                            $("form[name=" + link.attr("id") + "]").before(buildCondition(condition));
+                                            var station_dom = $("form[name=" + link.attr("id") + "]").parent().find("#" + condition.station_id);
+                                            if (station_dom.length == 0) {
+                                                station_dom = buildStationHeading(condition.station_id);
+                                                $("form[name=" + link.attr("id") + "]").before(station_dom);
+                                            }
+                                            station_dom.append(buildCondition(condition));
                                         }
+                                        $.sparkline_display_visible();
+                                        $( "#alerts" ).accordion( "refresh" );
                                     }
                                 )})
                             );
@@ -203,7 +256,10 @@
             if (alert["error"]) {
                $("#messages").html("<div class='flash'>" + alert["error"] + "</div>");
             } else {
-                $("#alerts").append(buildAlert(alert));
+                $(buildAlertHeader(alert)).appendTo("#alerts");
+                $(buildAlertContents(alert)).appendTo("#alerts");
+                $( "#alerts" ).accordion( "refresh" );
+
                 $("#alerts").find("select[name=station]").trigger("change");
                 $.sparkline_display_visible();
             }
@@ -212,6 +268,8 @@
         $(document).ready(function() {
             {%- if session.get('user_email', None) -%}
 
+                $( "#alerts" ).accordion(accordion_options);
+
                 // Get stations
                 $.get("{{ url_for('stations') }}", function(ss) {
                     stations = ss["stations"];
@@ -219,14 +277,17 @@
                     $.get("{{ url_for('alerts') }}", function(alerts) {
                         alerts = alerts["alerts"];
                         for (var i = 0 ; i < alerts.length ; i++) {
-                            $("#alerts").append(buildAlert(alerts[i]));
+                            $(buildAlertHeader(alerts[i])).appendTo("#alerts");
+                            $(buildAlertContents(alerts[i])).appendTo("#alerts");
+                            
                             $("#alerts").find("select[name=station]").trigger("change");
                             $.sparkline_display_visible();
                         }
+                        $( "#alerts" ).accordion( "refresh" );
                     });
                 });
 
-                $("#create").click(function() {
+                $("#alert_create_button").click(function() {
                     $.post("{{ url_for('new_alert') }}", 
                         $("#alert_form").serialize(),
                         function(alert) {
@@ -242,18 +303,38 @@
 {% block page %}
 
     {%- if session.get('user_email', None) -%}
+
+        <div id='left_notes'>
+            <form id="alert_form">
+                <label for="name">Name</label>
+                <input type="textfield" id="name" name="name" />
+                <label for="frequency">Notify me of alerts every</label>
+                <select type="select" id="frequency" name="frequency">
+                    <option value="10">10 minutes</option>
+                    <option value="20">20 minutes</option>
+                    <option value="40">40 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="360">6 hours</option>
+                    <option value="720">12 hours</option>
+                    <option value="1440">1 day</option>
+                </select>
+            </form>            
+            <button name="alert_create_button" id="alert_create_button">Create Alert</button>
+        </div>
+        <div id='right_notes'>
+            <div>Signed in as {{ session.get('user_email') }}</div>
+            <a href="{{ url_for('logout') }}">sign out</a>
+        </div>
+
+        <div class='clear'></div>
+
         <h2>Alerts</h2>
-        <ul id="alerts"></ul>
-
-        <h2>Create alert</h2>
-        <form id="alert_form">
-            <label for="name">Name</label>
-            <input type="textfield" id="name" name="name" />
-        </form>
-
-        <br />
-
-        <button name="create" id="create">Create Alert</button>
+        <div id="alerts"></div>
+        <div id='map_wrapper'>
+            <div id="search">Search it up</div>
+            <div id="map">Map it up</div>
+        </div>
+        <div class="clear"></div>
 
     {%- else -%}
 

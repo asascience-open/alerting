@@ -27,7 +27,7 @@ class Alert(Document):
         'frequency'         : int           # number of minutes between alerts
     }
     required_fields = ['email', 'created', 'updated', 'frequency']
-    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 15 }
+    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 60 }
 
     def user_friendly_frequency(self):
         if self.frequency:
@@ -38,6 +38,12 @@ class Alert(Document):
     def user_friendly_checked(self):
         if self.checked:
             return human(datetime.utcnow() - self.checked)
+        else:
+            return "never"
+
+    def user_friendly_sent(self):
+        if self.sent:
+            return human(datetime.utcnow() - self.sent)
         else:
             return "never"
 

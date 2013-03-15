@@ -12,12 +12,12 @@ from alerting.models.alert import Alert
 @app.route('/alerts', methods=['GET'])
 def alerts():
     user = session.get('user_email', None)
-    alerts = db.Alert.find({ 'email' : user })
-
-    new_alerts = []
+    alerts = list(db.Alert.find({ 'email' : user }))
 
     for a in alerts:
+        a['frequency'] = a.user_friendly_frequency()
         a['checked'] = a.user_friendly_checked()
+        a['sent'] = a.user_friendly_sent()
         a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
         a['new_condition_url'] = url_for('new_condition', alert_id=a['_id'])
 
@@ -26,9 +26,9 @@ def alerts():
             c['timeseries'] = c.data()
             c['station_id'] = c.station()['_id']
 
-        new_alerts.append(a)
+        a.conditions = sorted(a.conditions, key=lambda x: x['station_id'])
 
-    return jsonify({ "alerts" : new_alerts })
+    return jsonify({ "alerts" : alerts })
 
 @app.route('/alerts/new', methods=['POST'])
 def new_alert():
@@ -37,6 +37,7 @@ def new_alert():
     alert = db.Alert()
     alert.email = user
     alert.name = request.form.get("name", "")
+    alert.frequency = int(request.form.get("frequency", 60))
     if alert.name == "":
         alert.name = u"Unnamed Alert"
 
@@ -46,7 +47,9 @@ def new_alert():
         app.logger.warn(e.message)
         alert = { "error" : e.message }
 
+    alert['frequency'] = alert.user_friendly_frequency()
     alert['checked'] = alert.user_friendly_checked()
+    alert['sent'] = alert.user_friendly_sent()
     alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
     alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
 
