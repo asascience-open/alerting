@@ -64,7 +64,7 @@ db.register([Station])
 
 
 def parse_stations():
-    url = "http://explorer.glos.us/getObs.php"
+    url = "http://data.glos.us/portal/getObs.php"
     j = json.loads(urllib2.urlopen(url).read())
     for s in j:
         properties = s.get('properties')
