@@ -132,6 +132,23 @@ form {
         border: 1px solid #000;
     }
 
-.obs {
-  font-size : 10px;
+.buoyPopup {
+  background : white;
+  padding    : 6px;
+}
+
+.buoyPopup th {
+  font        : 11px tahoma,helvetica,sans-serif;
+  font-weight : bold;
+  text-align  : center;
+}
+.buoyPopup td {
+  font        : 11px tahoma,helvetica,sans-serif;
+}
+
+.olFramedCloudPopupContent {
+    overflow: auto;
+    padding: 0 3px 0 3px;
+    text-align : center;
+    font-size : 12px;
 }

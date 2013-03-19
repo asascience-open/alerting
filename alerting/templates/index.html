@@ -9,6 +9,7 @@
         var proj3857 = new OpenLayers.Projection("EPSG:3857");
         var proj4326 = new OpenLayers.Projection("EPSG:4326");
         var map;
+        var features = [];
 
         function buildAlertHeader(alert) {
 
@@ -271,18 +272,22 @@
 
         function popup(f,showSensors) {
           var station = findStationById(f.cluster[0].attributes._id);
-          var html = [station.description.substr(0,40) + (station.description.length > 40 ? '...' : '')];
+          var rows = ['<th>' + station.description + '</th>'];
           if (showSensors) {
-            html.push('<br>yo');
+            // build your sensor table here!
+            rows.push('<td align=center>I wish I knew more about the sensors on this bad boy.</td>');
+          }
+          else {
+            rows.push('<td align=center><font color=gray>Click the icon to view sensor details.</font></td>');
           }
           var centroid = f.geometry.getCentroid();
           map.popup = new OpenLayers.Popup.FramedCloud(
              'popup'
             ,new OpenLayers.LonLat(centroid.x,centroid.y)
             ,null
-            ,'<table class="obs" style="width:200px">' + html.join('') + '</table>'
+            ,'<table class="buoyPopup"><tr>' + rows.join('</tr><tr>') + '</tr></table>'
             ,null
-            ,true
+            ,showSensors
             ,function() {
               map.removePopup(map.popup);
               map.popup.destroy();
@@ -302,6 +307,22 @@
             map.popup.destroy();
             delete map.popup;
           }
+        }
+
+        function syncMapWithAlert(alert) {
+          var lyr = map.getLayersByName('Stations')[0];
+          for (var i = 0; i < features.length; i++) {
+            features[i].attributes.numAlertsWatched   = 0;
+            features[i].attributes.numAlertsTriggered = 0;
+            for (var k = 0 ; k < alert.conditions.length ; k++) {
+              if (features[i].attributes._id == alert.conditions[k].station_id) {
+                features[i].attributes.numAlertsWatched++;
+                features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
+              }
+            }
+          } 
+          lyr.addFeatures(features);
+          lyr.redraw();
         }
 
         $(document).ready(function() {
@@ -387,9 +408,6 @@
                       })
                     })
                     ,strategies : [new OpenLayers.Strategy.Cluster({
-                      /**
-                       * the rule to use for comparison
-                       */
                       rule: new OpenLayers.Rule({
                           filter: new OpenLayers.Filter.Comparison({
                                type     : OpenLayers.Filter.Comparison.EQUAL_TO
@@ -397,17 +415,6 @@
                               ,value    : 0
                           })
                       })
-                      /**
-                       * Method: shouldCluster
-                       * Determine whether to include a feature in a given cluster.
-                       *
-                       * Parameters:
-                       * cluster - {<OpenLayers.Feature.Vector>} A cluster.
-                       * feature - {<OpenLayers.Feature.Vector>} A feature.
-                       *
-                       * Returns:
-                       * {Boolean} The feature should be included in the cluster.
-                       */
                       ,shouldCluster: function(cluster, feature) {
                           var superProto = OpenLayers.Strategy.Cluster.prototype;
                           return this.rule.evaluate(cluster.cluster[0]) &&
@@ -489,7 +496,6 @@
                     var allStations = ss["stations"];
 
                     // filter out stations outside our AOI
-                    var features = {};
                     var aoi = new OpenLayers.Format.GeoJSON().read(getAOI())[0].geometry.transform(proj4326,proj3857);
                     for (var i = 0 ; i < allStations.length ; i++) {
                         var f = new OpenLayers.Feature.Vector(
@@ -504,7 +510,7 @@
                           }
                         );
                         if (aoi.intersects(f.geometry)) {
-                          features[allStations[i]._id] = f;
+                          features.push(f);
                           stations.push(allStations[i]);
                         }
                     }
@@ -517,22 +523,10 @@
 
                             $("#alerts").find("select[name=station]").trigger("change");
                             $.sparkline_display_visible();
-
-                            // associate the conditions w/ the dots on the map
-                            for (var j = 0 ; j < alerts[i].conditions.length ; j++) {
-                                features[alerts[i].conditions[j].station_id].attributes.numAlertsWatched++;
-                                // next line is what triggers an alert icon
-                                features[alerts[i].conditions[j].station_id].attributes.numAlertsTriggered += (j == 1 || j % 2 == 0) ? 1 : 0;
-                            }
                         }
-                        // add features to map
-                        var f = [];
-                        for (var i in features) {
-                          f.push(features[i]);
-                        }
-                        lyr.addFeatures(f);
 
                         $( "#alerts" ).accordion( "refresh" );
+                        syncMapWithAlert(alerts[0]);
                     });
                 });
 
