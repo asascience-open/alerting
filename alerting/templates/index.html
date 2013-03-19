@@ -10,6 +10,7 @@
         var proj4326 = new OpenLayers.Projection("EPSG:4326");
         var map;
         var features = [];
+        var selectCtl;
 
         function buildAlertHeader(alert) {
 
@@ -81,8 +82,12 @@
             // If there is a station link, create the link
             if (station.link != "") {
                 d.append($("<a />")
+                // SHOES
+                .attr("href","javascript:zoomToStationById('" + station_id + "')")
+/*
                 .attr("href", station.link)
                 .attr("target", "_blank")
+*/
                 .html(station.provider + " - " + station.description))
             } else {
                 d.append($("<span />").html(station.provider + " - " + station.description));
@@ -271,10 +276,10 @@
         }
 
         function popup(f,showSensors) {
-          var station = findStationById(f.cluster[0].attributes._id);
+          var station = findStationById(f.cluster ? f.cluster[0].attributes._id : f.attributes._id);
           var rows = ['<th>' + station.description + '</th>'];
           if (showSensors) {
-            // build your sensor table here!
+            // SHOES build your sensor table here!
             rows.push('<td align=center>I wish I knew more about the sensors on this bad boy.</td>');
           }
           else {
@@ -299,13 +304,24 @@
           map.addPopup(map.popup,true);
         }
 
-        function zoom(f) {
+        function recenterAndZoomToFeature(f) {
           var centroid = f.geometry.getCentroid();
           map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),map.getZoom() + 1);
           if (map.popup) {
             map.removePopup(map.popup);
             map.popup.destroy();
             delete map.popup;
+          }
+        }
+
+        function zoomToStationById(id) {
+          for (var i = 0; i < features.length; i++) {
+            if (features[i].attributes._id == id) {
+              var centroid = features[i].geometry.getCentroid();
+              map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),8);
+              popup(features[i],true);
+              return;
+            }
           }
         }
 
@@ -452,7 +468,7 @@
                     }
                   } 
                 );
-                var selectCtl = new OpenLayers.Control.SelectFeature(
+                selectCtl = new OpenLayers.Control.SelectFeature(
                    lyr
                   ,{
                      autoActivate   : true
@@ -462,7 +478,7 @@
                           popup(e.feature,true);
                         }
                         else {
-                          zoom(e.feature);
+                          recenterAndZoomToFeature(e.feature);
                         }
                       }
                     }
