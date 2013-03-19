@@ -131,3 +131,7 @@ form {
         height: 448px;
         border: 1px solid #000;
     }
+
+.obs {
+  font-size : 10px;
+}
