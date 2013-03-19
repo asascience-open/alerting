@@ -6,6 +6,10 @@
         var stations = [];
         var accordion_options = { heightStyle: "content" };
 
+        var proj3857 = new OpenLayers.Projection("EPSG:3857");
+        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+        var map;
+
         function buildAlertHeader(alert) {
 
             var del_link =  $("<a />")
@@ -268,11 +272,58 @@
         $(document).ready(function() {
             {%- if session.get('user_email', None) -%}
 
+                var lyr = new OpenLayers.Layer.Vector(
+                   'Stations'
+                  ,{strategies : [new OpenLayers.Strategy.Cluster()]}
+                );
+                var ctl = new OpenLayers.Control.SelectFeature(
+                   lyr
+                  ,{
+                     hover        : true
+                    ,autoActivate : true
+                  } 
+                );
+                map = new OpenLayers.Map('map',{
+                    layers             : [
+                        new OpenLayers.Layer.XYZ(
+                             'ESRI Ocean'
+                            ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
+                            ,{
+                                 sphericalMercator : true
+                                ,isBaseLayer       : true
+                            }
+                        )
+                        ,lyr
+                    ]
+                    ,projection        : proj3857
+                    ,displayProjection : proj4326
+                    ,units             : 'm'
+                    ,maxExtent         : new OpenLayers.Bounds(-20037508,-20037508,20037508,20037508.34)
+                });
+                map.addControl(ctl);
+                map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
+
                 $( "#alerts" ).accordion(accordion_options);
 
                 // Get stations
                 $.get("{{ url_for('stations') }}", function(ss) {
-                    stations = ss["stations"];
+                    var allStations = ss["stations"];
+
+                    // filter out stations outside our AOI
+                    var features = [];
+                    var aoi = new OpenLayers.Format.GeoJSON().read(getAOI())[0].geometry.transform(proj4326,proj3857);
+                    for (var i = 0 ; i < allStations.length ; i++) {
+                        var f = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(
+                           allStations[i].coordinates[1]
+                          ,allStations[i].coordinates[0]
+                        ).transform(proj4326,proj3857));
+                        if (aoi.intersects(f.geometry)) {
+                          features.push(f);
+                          stations.push(allStations[i]);
+                        }
+                    }
+                    lyr.addFeatures(features);
+
                     // Get alerts
                     $.get("{{ url_for('alerts') }}", function(alerts) {
                         alerts = alerts["alerts"];
@@ -332,7 +383,7 @@
         <div id="alerts"></div>
         <div id='map_wrapper'>
             <div id="search">Search it up</div>
-            <div id="map">Map it up</div>
+            <div id="map"></div>
         </div>
         <div class="clear"></div>
 
