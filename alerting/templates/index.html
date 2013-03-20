@@ -363,6 +363,7 @@
             for (var k = 0 ; k < alert.conditions.length ; k++) {
               if (features[i].attributes._id == alert.conditions[k].station_id) {
                 features[i].attributes.numAlertsWatched++;
+                // SHOES need to do the real testing here
                 features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
               }
             }
