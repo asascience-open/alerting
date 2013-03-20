@@ -4,6 +4,7 @@
     <script type="text/javascript">
 
         var stations = [];
+        var saved_alerts = [];
         var accordion_options = { heightStyle: "content" };
 
         var proj3857 = new OpenLayers.Projection("EPSG:3857");
@@ -82,12 +83,9 @@
             // If there is a station link, create the link
             if (station.link != "") {
                 d.append($("<a />")
-                // SHOES changed this link from station home page to zoomToStation on map
+                // Zoom to the station on the map.  The stations popup has a link to the
+                // external station page.
                 .attr("href","javascript:zoomToStationById('" + station_id + "')")
-/*
-                .attr("href", station.link)
-                .attr("target", "_blank")
-*/
                 .html(station.provider + " - " + station.description))
             } else {
                 d.append($("<span />").html(station.provider + " - " + station.description));
@@ -266,12 +264,11 @@
             if (alert["error"]) {
                $("#messages").html("<div class='flash'>" + alert["error"] + "</div>");
             } else {
+                saved_alerts.push(alert);
                 $(buildAlertHeader(alert)).appendTo("#alerts");
                 $(buildAlertContents(alert)).appendTo("#alerts");
                 $( "#alerts" ).accordion( "refresh" );
-
-                $("#alerts").find("select[name=station]").trigger("change");
-                $.sparkline_display_visible();
+                $( "#alerts" ).accordion({ active: -1 });
             }
         }
 
@@ -356,8 +353,24 @@
         }
 
         function gotoCondition(station_id,sensorName) {
-          // SHOES do something w/ this
-          alert('WTF do I do w/ station ' + station_id + '\'s ' + sensorName + ' sensor?');
+          // This should set the Condition values to the station and parameter that was clicked,
+          // allowing the user to quickly add an alert for this parameter.
+          var active_index = $( "#alerts" ).accordion( "option", "active" );
+          alert = saved_alerts[active_index];
+          var form_dom =  $("form[name=" + alert._id + "]")
+          var station_dom =  form_dom.parent().find("#" + station_id);
+          if (station_dom.length > 0) {
+            // Highlight station listing
+            station_dom.effect("highlight", {}, 1000);
+          }
+
+          // Populate condition fields with information
+          form_dom.find("select[name=station]").val(station_id).effect("highlight", {}, 1000).trigger("change");
+          // This is SO hacky... but we don't know when the "change" event will be done and the select box will
+          // contain the variables we need to set with .val().
+          setTimeout(function() {
+            form_dom.find("select[name=variable]").val(sensorName).effect("highlight", {}, 1000).trigger("change");
+          }, 300);
         }
 
         function syncMapWithAlert(alert) {
@@ -369,6 +382,9 @@
             features[i].attributes.force              = 0;
             for (var k = 0 ; k < alert.conditions.length ; k++) {
               if (features[i].attributes._id == alert.conditions[k].station_id) {
+
+                // I need the condition objects in the popup.  However you want to do it, go for it.
+
                 features[i].attributes.numAlertsWatched++;
                 // SHOES need to do the real testing here
                 features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
@@ -526,6 +542,12 @@
                 map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
 
                 $( "#alerts" ).accordion(accordion_options);
+                $( "#alerts" ).on("accordionactivate", function(event, ui) {
+                    $(ui.newPanel).find("select[name=station]").trigger("change");
+                    $.sparkline_display_visible();
+                    var active_index = $( "#alerts" ).accordion( "option", "active" );
+                    syncMapWithAlert(saved_alerts[active_index]);
+                });
 
                 // Get stations
                 $.get("{{ url_for('stations') }}", function(ss) {
@@ -578,14 +600,12 @@
                     $.get("{{ url_for('alerts') }}", function(alerts) {
                         alerts = alerts["alerts"];
                         for (var i = 0 ; i < alerts.length ; i++) {
+                            saved_alerts.push(alerts[i]);
                             $(buildAlertHeader(alerts[i])).appendTo("#alerts");
                             $(buildAlertContents(alerts[i])).appendTo("#alerts");
-
-                            $("#alerts").find("select[name=station]").trigger("change");
-                            $.sparkline_display_visible();
                         }
-
                         $( "#alerts" ).accordion( "refresh" );
+                        $( "#alerts" ).accordion( "option", "active", 0 );
                         syncMapWithAlert(alerts[0]);
                     });
                 });
