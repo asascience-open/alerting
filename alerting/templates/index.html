@@ -340,12 +340,17 @@
         }
 
         function zoomToStationById(id) {
-          for (var i = 0; i < features.length; i++) {
-            if (features[i].attributes._id == id) {
-              var centroid = features[i].geometry.getCentroid();
-              map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),8);
-              popup(features[i],true);
-              return;
+          var lyr = map.getLayersByName('Stations')[0];
+          var f = lyr.features;
+          for (var i = 0 ; i < f.length; i++) {
+            for (var j = 0 ; j < f[i].cluster.length; j++) {
+              if (f[i].cluster[j].attributes._id == id) {
+                f[i].cluster[j].attributes.force = 1;
+                var centroid = f[i].geometry.getCentroid();
+                map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),8);
+                popup(f[i],true);
+                return;
+              }
             }
           }
         }
@@ -357,9 +362,11 @@
 
         function syncMapWithAlert(alert) {
           var lyr = map.getLayersByName('Stations')[0];
+          lyr.removeFeatures();
           for (var i = 0; i < features.length; i++) {
             features[i].attributes.numAlertsWatched   = 0;
             features[i].attributes.numAlertsTriggered = 0;
+            features[i].attributes.force              = 0;
             for (var k = 0 ; k < alert.conditions.length ; k++) {
               if (features[i].attributes._id == alert.conditions[k].station_id) {
                 features[i].attributes.numAlertsWatched++;
@@ -456,10 +463,20 @@
                     })
                     ,strategies : [new OpenLayers.Strategy.Cluster({
                       rule: new OpenLayers.Rule({
-                          filter: new OpenLayers.Filter.Comparison({
-                               type     : OpenLayers.Filter.Comparison.EQUAL_TO
-                              ,property : 'numAlertsWatched'
-                              ,value    : 0
+                          filter: new OpenLayers.Filter.Logical({
+                            type    : OpenLayers.Filter.Logical.AND
+                           ,filters : [
+                              new OpenLayers.Filter.Comparison({
+                                   type     : OpenLayers.Filter.Comparison.EQUAL_TO
+                                  ,property : 'numAlertsWatched'
+                                  ,value    : 0
+                              })
+                              ,new OpenLayers.Filter.Comparison({
+                                   type     : OpenLayers.Filter.Comparison.NOT_EQUAL_TO
+                                  ,property : 'force'
+                                  ,value    : 1
+                              })
+                            ]
                           })
                       })
                       ,shouldCluster: function(cluster, feature) {
@@ -526,6 +543,7 @@
                              _id                : allStations[i]._id
                             ,numAlertsWatched   : 0
                             ,numAlertsTriggered : 0
+                            ,force              : 0
                           }
                         );
                         if (aoi.intersects(f.geometry)) {
