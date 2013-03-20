@@ -553,6 +553,8 @@
                         zoomToStationById(ui.item.id);
                       }
                       ,minLength : 0
+                    }).focus(function() {
+                      $(this).autocomplete('search',$(this).val());
                     });
 
                     $.get("{{ url_for('alerts') }}", function(alerts) {
@@ -614,7 +616,7 @@
         <h2>Alerts</h2>
         <div id="alerts"></div>
         <div id='map_wrapper'>
-            <div id="searchDiv">Search for a station: <input id="search" onfocus="javascript:$(this).autocomplete('search','')"></div>
+            <div id="searchDiv">Search for a station: <input id="search"></div>
             <div id="map"></div>
         </div>
         <div class="clear"></div>
