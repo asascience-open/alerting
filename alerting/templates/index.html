@@ -82,7 +82,7 @@
             // If there is a station link, create the link
             if (station.link != "") {
                 d.append($("<a />")
-                // SHOES
+                // SHOES changed this link from station home page to zoomToStation on map
                 .attr("href","javascript:zoomToStationById('" + station_id + "')")
 /*
                 .attr("href", station.link)
@@ -277,14 +277,38 @@
 
         function popup(f,showSensors) {
           var station = findStationById(f.cluster ? f.cluster[0].attributes._id : f.attributes._id);
-          var rows = ['<th>' + station.description + '</th>'];
+          var rows = [];
+          var timeFound;
           if (showSensors) {
-            // SHOES build your sensor table here!
-            rows.push('<td align=center>I wish I knew more about the sensors on this bad boy.</td>');
+            for (var obsName in station.last_obs) {
+              if (!timeFound) {
+                timeFound = true;
+                rows.unshift('<td colspan=2>' + new Date(station.last_obs[obsName].t * 1000).format("mmm d h:MM TT Z") + '</td>');
+              }
+              var obsVals = [];
+              for (var obsUnit in station.last_obs[obsName].v) {
+                obsVals.push(String(station.last_obs[obsName].v[obsUnit] + ' ' + obsUnit).replace(/ /g,'&nbsp;'));
+              }
+              if (obsVals.length == 0) {
+                obsVals = ['---'];
+              }
+              var alertImg = '{{ url_for('.static', filename='images/blank.png') }}';
+              // SHOES this is where you would test for the alert activity
+              if (rows.length % 2 == 0) {
+                alertImg = '{{ url_for('.static', filename='images/alert16.png') }}';
+              }
+              rows.push(
+                '<td align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>' 
+                + '<td align=right>' + obsVals.join('<br>') + '</td>'
+                + '<td><img width=16 height=16 src="' + alertImg + '"></td>'
+              );
+            }
+            rows.push('<td colspan=2 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
           }
           else {
             rows.push('<td align=center><font color=gray>Click the icon to view sensor details.</font></td>');
           }
+          rows.unshift('<th colspan=2>' + station.description + '</th>');
           var centroid = f.geometry.getCentroid();
           map.popup = new OpenLayers.Popup.FramedCloud(
              'popup'
@@ -302,6 +326,7 @@
           map.popup.panMapIfOutOfView = false;
           map.popup.name = f.attributes.name;
           map.addPopup(map.popup,true);
+          map.popup.setSize(map.popup.contentSize);
         }
 
         function recenterAndZoomToFeature(f) {
@@ -323,6 +348,11 @@
               return;
             }
           }
+        }
+
+        function gotoCondition(station_id,sensorName) {
+          // SHOES do something w/ this
+          alert('WTF do I do w/ station ' + station_id + '\'s ' + sensorName + ' sensor?');
         }
 
         function syncMapWithAlert(alert) {
@@ -501,7 +531,7 @@
                     ,units             : 'm'
                     ,maxExtent         : new OpenLayers.Bounds(-20037508,-20037508,20037508,20037508.34)
                 });
-                map.addControl(highlightCtl);
+                // map.addControl(highlightCtl);
                 map.addControl(selectCtl);
                 map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
 
