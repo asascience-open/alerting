@@ -125,12 +125,15 @@ form {
 
     #map_wrapper #search {
         border: 1px solid #000;
+        width   : 446px;
     }
     
     #map_wrapper #map {
         height: 448px;
         border: 1px solid #000;
     }
+
+.ui-autocomplete { position: absolute; cursor: default;z-index:3000 !important;}  
 
 .buoyPopup {
   background : white;

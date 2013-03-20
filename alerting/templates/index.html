@@ -308,7 +308,7 @@
           else {
             rows.push('<td align=center><font color=gray>Click the icon to view sensor details.</font></td>');
           }
-          rows.unshift('<th colspan=2>' + station.description + '</th>');
+          rows.unshift('<th colspan=2>' + station.provider + ' - ' + station.description + '</th>');
           var centroid = f.geometry.getCentroid();
           map.popup = new OpenLayers.Popup.FramedCloud(
              'popup'
@@ -472,33 +472,6 @@
                     ,rendererOptions: {zIndexing: true}
                   }
                 );
-                var highlightCtl = new OpenLayers.Control.SelectFeature(
-                   lyr
-                  ,{
-                     autoActivate   : true
-                    ,highlightOnly  : true
-                    ,hover          : true
-                    ,eventListeners : {
-                      featurehighlighted : function(e) {
-                        if (e.feature.attributes.count == 1) {
-                          popup(e.feature,false);
-                        }
-                        else if (map.popup) {
-                          map.removePopup(map.popup);
-                          map.popup.destroy();
-                          delete map.popup;
-                        }
-                      }
-                      ,featureunhighlighted : function(e) {
-                        if (map.popup) {
-                          map.removePopup(map.popup);
-                          map.popup.destroy();
-                          delete map.popup;
-                        }
-                      }
-                    }
-                  } 
-                );
                 selectCtl = new OpenLayers.Control.SelectFeature(
                    lyr
                   ,{
@@ -532,7 +505,6 @@
                     ,units             : 'm'
                     ,maxExtent         : new OpenLayers.Bounds(-20037508,-20037508,20037508,20037508.34)
                 });
-                // map.addControl(highlightCtl);
                 map.addControl(selectCtl);
                 map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
 
@@ -540,8 +512,8 @@
 
                 // Get stations
                 $.get("{{ url_for('stations') }}", function(ss) {
-                    var allStations = ss["stations"];
-
+                    var allStations  = ss["stations"];
+                    var stations2ids = {};
                     // filter out stations outside our AOI
                     var aoi = new OpenLayers.Format.GeoJSON().read(getAOI())[0].geometry.transform(proj4326,proj3857);
                     for (var i = 0 ; i < allStations.length ; i++) {
@@ -558,9 +530,29 @@
                         );
                         if (aoi.intersects(f.geometry)) {
                           features.push(f);
+                          stations2ids[allStations[i].provider + ' - ' + allStations[i].description] = allStations[i]._id;
                           stations.push(allStations[i]);
                         }
                     }
+
+                    var sortedStations = [];
+                    for (var s in stations2ids) {
+                      sortedStations.push(s);
+                    }
+                    sortedStations.sort(function(a,b) {
+                      return a.toLowerCase().localeCompare(b.toLowerCase());
+                    });
+                    var searchStations = [];
+                    for (var i = 0; i < sortedStations.length; i++) {
+                      searchStations.push({label : sortedStations[i],id : stations2ids[sortedStations[i]]});
+                    }
+
+                    $("#search").autocomplete({
+                       source : searchStations
+                      ,select : function(e,ui) {
+                        zoomToStationById(ui.item.id);
+                      }
+                    });
 
                     $.get("{{ url_for('alerts') }}", function(alerts) {
                         alerts = alerts["alerts"];
@@ -621,7 +613,7 @@
         <h2>Alerts</h2>
         <div id="alerts"></div>
         <div id='map_wrapper'>
-            <div id="search">Search it up</div>
+            <input id="search">
             <div id="map"></div>
         </div>
         <div class="clear"></div>
