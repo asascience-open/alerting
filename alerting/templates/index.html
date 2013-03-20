@@ -548,10 +548,11 @@
                     }
 
                     $("#search").autocomplete({
-                       source : searchStations
-                      ,select : function(e,ui) {
+                       source    : searchStations
+                      ,select    : function(e,ui) {
                         zoomToStationById(ui.item.id);
                       }
+                      ,minLength : 0
                     });
 
                     $.get("{{ url_for('alerts') }}", function(alerts) {
@@ -613,7 +614,7 @@
         <h2>Alerts</h2>
         <div id="alerts"></div>
         <div id='map_wrapper'>
-            <input id="search">
+            <input id="search" onfocus="javascript:$(this).autocomplete('search','')">
             <div id="map"></div>
         </div>
         <div class="clear"></div>
