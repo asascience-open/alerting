@@ -336,6 +336,18 @@
           map.popup.setSize(new OpenLayers.Size(275,(lines + 1.5) * 20));
         }
 
+        function pokeMap() {
+          // the icons don't always update so, force it here
+          if (map.getZoom() > 1) {
+            map.zoomIn();
+            map.zoomOut();
+          }
+          else {
+            map.zoomOut();
+            map.zoomIn();
+          }
+        }
+
         function recenterAndZoomToFeature(f) {
           var centroid = f.geometry.getCentroid();
           map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),map.getZoom() + 1);
