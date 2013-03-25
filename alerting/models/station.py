@@ -34,14 +34,18 @@ class Station(Document):
     def variables(self):
         variables = {}
 
-        #app.logger.info(self.timeseries)
-
         if self.timeseries:
             for k,v in self.timeseries.items():
                 if not isinstance(self.timeseries[k], list):
                     units = self.timeseries[k][u'v'].keys()
                     variables[k] = units
-        
+
+        if self.last_obs:
+            for k,v in self.last_obs.items():
+                if not variables.get(k, None) and not isinstance(self.last_obs[k][u'v'], list):
+                    units = self.last_obs[k][u'v'].keys()
+                    variables[k] = units
+
         return variables
 
     def data(self, variable=None, units=None):
