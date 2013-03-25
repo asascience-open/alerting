@@ -275,12 +275,14 @@
         function popup(f,showSensors) {
           var station = findStationById(f.cluster ? f.cluster[0].attributes._id : f.attributes._id);
           var rows = [];
+          var lines = 0; // keep track of how many data lines there are in order to set the height of the popup
           var timeFound;
           if (showSensors) {
             for (var obsName in station.last_obs) {
               if (!timeFound) {
                 timeFound = true;
                 rows.unshift('<td colspan=2>' + new Date(station.last_obs[obsName].t * 1000).format("mmm d h:MM TT Z") + '</td>');
+                lines++;
               }
               var obsVals = [];
               for (var obsUnit in station.last_obs[obsName].v) {
@@ -299,13 +301,19 @@
                 + '<td align=right>' + obsVals.join('<br>') + '</td>'
                 + '<td><img width=16 height=16 src="' + alertImg + '"></td>'
               );
+              lines += obsVals.length;
             }
             rows.push('<td colspan=2 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
+            lines++;
+            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '" target=_blank>here</a> for station information.</font></td>');
+            lines++;
           }
           else {
             rows.push('<td align=center><font color=gray>Click the icon to view sensor details.</font></td>');
+            lines++;
           }
           rows.unshift('<th colspan=2>' + station.provider + ' - ' + station.description + '</th>');
+          lines++;
           var centroid = f.geometry.getCentroid();
           map.popup = new OpenLayers.Popup.FramedCloud(
              'popup'
@@ -320,10 +328,10 @@
               delete map.popup;
             }
           );
-          map.popup.panMapIfOutOfView = false;
+          // map.popup.panMapIfOutOfView = false;
           map.popup.name = f.attributes.name;
           map.addPopup(map.popup,true);
-          map.popup.setSize(map.popup.contentSize);
+          map.popup.setSize(new OpenLayers.Size(275,(lines + 1.5) * 20));
         }
 
         function recenterAndZoomToFeature(f) {
