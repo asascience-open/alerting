@@ -13,6 +13,19 @@
         var features = [];
         var selectCtl;
 
+        function removeFromSavedAlerts(alert) {
+            var remove_index = -1;
+            for (var i = 0 ; i < saved_alerts.length ; i++) {
+                if (saved_alerts[i]._id == alert._id) {
+                    remove_index = i;
+                    break;
+                }
+            }
+            if (remove_index != -1) {
+                saved_alerts.splice(remove_index,1);
+            }
+        }
+
         function buildAlertHeader(alert) {
 
             var del_link =  $("<a />")
@@ -24,10 +37,19 @@
                                     $.post(alert.destroy_url
                                         ,null
                                         ,function() {
-                                            var parent = $(e.currentTarget).closest('h3');
-                                            var head = parent.next('div');
-                                            head.add(parent).fadeOut('slow',function(){ $(e.currentTarget).remove(); });
-                                            $( "#alerts" ).accordion( "refresh" );
+                                            // Remove alert from saved_alerts
+                                            removeFromSavedAlerts(alert);
+
+                                            var header = $(e.currentTarget).closest('h3');
+                                            var contents = header.next('div');
+
+                                            // Only refresh map when we delete the active alert
+                                            if (contents.css("display") != "none") {
+                                                $( "#alerts" ).accordion( "refresh" );
+                                                syncMapWithAlert(null);
+                                            }
+                                            header.add(contents).fadeOut('slow',function(){ header.remove(); contents.remove() });
+
                                         });
                                     return false;
                                 });
@@ -64,7 +86,7 @@
                     last_station_id = this_station_id;
                 }
 
-                last_station_dom.append(buildCondition(alert.conditions[j]));
+                last_station_dom.append(buildCondition(alert, alert.conditions[j]));
             }
             ul.append(last_station_dom);
 
@@ -94,7 +116,7 @@
             return d
         }
 
-        function buildCondition(cond) {
+        function buildCondition(alert, cond) {
 
             data = cond['timeseries'];
 
@@ -132,7 +154,21 @@
                                         if (station_div.find("div").length == 0) {
                                             station_div.remove();
                                         }
+                                        // Add condition to saved_alerts
+                                        var remove_index = -1;
+                                        var active_index = $( "#alerts" ).accordion( "option", "active" );
+                                        for (var i = 0 ; i < saved_alerts[active_index].conditions.length ; i++) {
+                                            if (saved_alerts[active_index].conditions[i]._id == cond._id) {
+                                                remove_index = i;
+                                                break;  
+                                            }
+                                        }
+                                        if (remove_index != -1) {
+                                            saved_alerts[active_index].conditions.splice(remove_index, 1);
+                                        }
+
                                         $( "#alerts" ).accordion( "refresh" );
+                                        syncMapWithAlert(alert);
                                     }
                                 )})
                         );
@@ -197,11 +233,13 @@
                                                 t = $(e.currentTarget);
                                                 units_select = t.parent().find("select[name=units]");
                                                 units_select.empty();
-                                                $.each(station.variables[t.val()], function(i, u) {
-                                                    units_select.append($("<option />")
-                                                        .attr("value", u)
-                                                        .html(u));
-                                                });
+                                                if (station.variables.hasOwnProperty(t.val())) {
+                                                    $.each(station.variables[t.val()], function(i, u) {
+                                                        units_select.append($("<option />")
+                                                            .attr("value", u)
+                                                            .html(u));
+                                                    });
+                                                }
                                             });
                     var_select.trigger("change");
                     target.parent().find("button[name=add]").removeAttr("disabled");
@@ -249,10 +287,15 @@
                                                 station_dom = buildStationHeading(condition.station_id);
                                                 $("form[name=" + link.attr("id") + "]").before(station_dom);
                                             }
-                                            station_dom.append(buildCondition(condition));
+                                            station_dom.append(buildCondition(alert, condition));
                                         }
+                                        // Add condition to saved_alerts
+                                        var active_index = $( "#alerts" ).accordion( "option", "active" );
+                                        saved_alerts[active_index].conditions.push(condition);
+
                                         $.sparkline_display_visible();
                                         $( "#alerts" ).accordion( "refresh" );
+                                        syncMapWithAlert(alert);
                                     }
                                 )})
                             );
@@ -277,8 +320,8 @@
           var rows = [];
           var lines = 0; // keep track of how many data lines there are in order to set the height of the popup
           var timeFound;
-// SHOES
-// f.attributes.conditions is where it's at.
+          // SHOES
+          // f.attributes.conditions is where it's at.
           if (showSensors) {
             for (var obsName in station.last_obs) {
               if (!timeFound) {
@@ -307,7 +350,7 @@
             }
             rows.push('<td colspan=2 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
             lines++;
-            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '">here</a> for station information.</font></td>');
+            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '" target=\'_blank\'>here</a> for station information.</font></td>');
             lines++;
           }
           else {
@@ -334,18 +377,6 @@
           map.popup.name = f.attributes.name;
           map.addPopup(map.popup,true);
           map.popup.setSize(new OpenLayers.Size(275,(lines + 1.5) * 20));
-        }
-
-        function pokeMap() {
-          // the icons don't always update so, force it here
-          if (map.getZoom() > 1) {
-            map.zoomIn();
-            map.zoomOut();
-          }
-          else {
-            map.zoomOut();
-            map.zoomIn();
-          }
         }
 
         function recenterAndZoomToFeature(f) {
@@ -395,27 +426,41 @@
           }, 300);
         }
 
+        function pokeMap() {
+          // the icons don't always update so, force it here
+          if (map.getZoom() > 1) {
+            map.zoomIn();
+            map.zoomOut();
+          }
+          else {
+            map.zoomOut();
+            map.zoomIn();
+          }
+        }
+
         function syncMapWithAlert(alert) {
           var lyr = map.getLayersByName('Stations')[0];
           lyr.removeFeatures();
-          for (var i = 0; i < features.length; i++) {
+          // If null is passed in, just clear the map.
+
+          for (var i = 0 ; i < features.length ; i++) {
             features[i].attributes.numAlertsWatched   = 0;
             features[i].attributes.numAlertsTriggered = 0;
             features[i].attributes.force              = 0;
-            features[i].attributes.conditions         = alert.conditions;
-            for (var k = 0 ; k < alert.conditions.length ; k++) {
-              if (features[i].attributes._id == alert.conditions[k].station_id) {
-
-                // I need the condition objects in the popup.  However you want to do it, go for it.
-
-                features[i].attributes.numAlertsWatched++;
-                // SHOES need to do the real testing here
-                features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
-              }
+            if (alert != null) {
+                features[i].attributes.conditions     = alert.conditions;
+                for (var k = 0 ; k < alert.conditions.length ; k++) {
+                    if (features[i].attributes._id == alert.conditions[k].station_id) {
+                        features[i].attributes.numAlertsWatched++;
+                        // SHOES need to do the real testing here
+                        features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
+                    }
+                }
             }
-          } 
+          }
           lyr.addFeatures(features);
           lyr.redraw();
+          pokeMap();
         }
 
         $(document).ready(function() {
@@ -569,7 +614,14 @@
                     $(ui.newPanel).find("select[name=station]").trigger("change");
                     $.sparkline_display_visible();
                     var active_index = $( "#alerts" ).accordion( "option", "active" );
-                    syncMapWithAlert(saved_alerts[active_index]);
+                    var active_alert = null;
+                    if (active_index == -1) {
+                        active_alert = saved_alerts.slice(active_index, saved_alerts.length)[0];
+                    } else {
+                        active_alert = saved_alerts[active_index];
+                    }
+                    syncMapWithAlert(active_alert);
+                    $( "#alerts" ).accordion( "refresh" );
                 });
 
                 // Get stations
@@ -629,7 +681,7 @@
                         }
                         $( "#alerts" ).accordion( "refresh" );
                         $( "#alerts" ).accordion( "option", "active", 0 );
-                        syncMapWithAlert(alerts[0]);
+                        syncMapWithAlert(saved_alerts[0]);
                     });
                 });
 
