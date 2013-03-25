@@ -277,6 +277,8 @@
           var rows = [];
           var lines = 0; // keep track of how many data lines there are in order to set the height of the popup
           var timeFound;
+// SHOES
+// f.attributes.conditions is where it's at.
           if (showSensors) {
             for (var obsName in station.last_obs) {
               if (!timeFound) {
@@ -305,7 +307,7 @@
             }
             rows.push('<td colspan=2 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
             lines++;
-            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '" target=_blank>here</a> for station information.</font></td>');
+            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '">here</a> for station information.</font></td>');
             lines++;
           }
           else {
@@ -388,6 +390,7 @@
             features[i].attributes.numAlertsWatched   = 0;
             features[i].attributes.numAlertsTriggered = 0;
             features[i].attributes.force              = 0;
+            features[i].attributes.conditions         = alert.conditions;
             for (var k = 0 ; k < alert.conditions.length ; k++) {
               if (features[i].attributes._id == alert.conditions[k].station_id) {
 
