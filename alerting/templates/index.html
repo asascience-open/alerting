@@ -295,7 +295,7 @@
 
                                         $.sparkline_display_visible();
                                         $( "#alerts" ).accordion( "refresh" );
-                                        syncMapWithAlert(alert);
+                                        syncMapWithAlert(alert,true);
                                     }
                                 )})
                             );
@@ -438,11 +438,12 @@
           }
         }
 
-        function syncMapWithAlert(alert) {
+        function syncMapWithAlert(alert,zoomTo) {
           var lyr = map.getLayersByName('Stations')[0];
           lyr.removeFeatures();
           // If null is passed in, just clear the map.
 
+          var bbox = new OpenLayers.Bounds();
           for (var i = 0 ; i < features.length ; i++) {
             features[i].attributes.numAlertsWatched   = 0;
             features[i].attributes.numAlertsTriggered = 0;
@@ -454,13 +455,27 @@
                         features[i].attributes.numAlertsWatched++;
                         // SHOES need to do the real testing here
                         features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
+                	bbox.extend(features[i].geometry.getBounds());
                     }
                 }
             }
           }
           lyr.addFeatures(features);
           lyr.redraw();
-          pokeMap();
+          // zoom to the alert if we have a decent bbox
+          if (zoomTo && typeof(bbox.bottom) == 'number') {
+            var size = bbox.getSize();
+            if (size.w == 0 && size.h == 0) {
+              // oops, only 1 point in bbox, so set the center around it @ zoom level 8
+              map.setCenter(bbox.getCenterLonLat(),8);
+            }
+            else {
+              map.zoomToExtent(bbox);
+            }
+          }
+          else {
+            pokeMap();
+          }
         }
 
         $(document).ready(function() {
@@ -620,7 +635,7 @@
                     } else {
                         active_alert = saved_alerts[active_index];
                     }
-                    syncMapWithAlert(active_alert);
+                    syncMapWithAlert(active_alert,true);
                     $( "#alerts" ).accordion( "refresh" );
                 });
 
@@ -681,7 +696,7 @@
                         }
                         $( "#alerts" ).accordion( "refresh" );
                         $( "#alerts" ).accordion( "option", "active", 0 );
-                        syncMapWithAlert(saved_alerts[0]);
+                        syncMapWithAlert(saved_alerts[0],true);
                     });
                 });
 
