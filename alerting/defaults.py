@@ -3,7 +3,7 @@ import urlparse
 
 DEBUG = False
 TESTING = False
-LOG_FILE = bool(os.environ.get("LOG_FILE"))
+LOG_FILE = bool(os.environ.get("LOG_FILE", False))
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
