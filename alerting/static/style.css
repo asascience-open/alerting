@@ -109,6 +109,24 @@ form {
     float: left;
 }
 
+.add_condition label {
+    float: left;
+    width: 80px;
+    display: block;
+    text-align: right;
+    padding-right: 10px;
+}
+
+.add_condition select {
+    float: left;
+    width: 300px;
+}
+
+.add_condition input {
+    float: left;
+    width: 60px;
+}
+
 .condition {
     height: 22px;
 }
@@ -129,7 +147,12 @@ form {
     float: right;   
 }
 
+#page_wrapper {
+    margin: 30px 0 0 0;
+}
+
 #alerts {
+    margin: 20px 0 0 0;
     width: 448px;
     float: left;
 }

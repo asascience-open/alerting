@@ -193,38 +193,44 @@
 
         function buildStationSelect(click_callback) {
 
-            var stat = $().add($("<select />")
-                                .attr("name", "station")
-                                .on("change", function(e) { click_callback(e); }));
+            var root = $("<div />")
 
+            var label = $("<label />").attr("for","station").text("Station");
+            
+            var stat = $("<select />")
+                            .attr("name", "station")
+                            .on("change", function(e) { click_callback(e); });
             // Set value to the index into the station array
+            options = ""
             $.each(stations, function(i,s) {
-                stat.append($("<option />")
-                                .attr("value", s._id)
-                                .html(s.provider + " - " + s.description));
+                options += "<option value='" + s._id + "'>" + s.provider + " - " + s.description + "</option>";
             });
+            stat.append(options);
 
-            return stat;
+            root.append(label);
+            root.append(stat);
+
+            return root;
         }
 
         function buildAddCondition(alert) {
 
             // Create form
-            var root = $("<form />").attr("name", alert._id).append($("<span />").html("Add condition: "))
+            var root = $("<form />").attr("class","add_condition").attr("name", alert._id).append($("<span />").html("Add condition: ")).append("<br />");
 
             // Add station select
             root.append(buildStationSelect(function(clicker) {
                 target = $(clicker.currentTarget);
                 station = findStationById(target.val());
 
-                var_select = target.parent().find("select[name=variable]");
+                var_select = target.parent().parent().find("select[name=variable]");
                 var_select.empty();
 
                 if (station.variables.length < 1) {
                     variable.append($("<option />")
                                         .attr("value", "")
                                         .html("Station not reporting, please check back at a later time to add more alerts"));
-                    target.parent().find("button[name=add]").attr("disabled", "disabled");
+                    target.parent().parent().find("button[name=add]").attr("disabled", "disabled");
                 } else {
                     $.each(station.variables, function(k,v) {
                         var_select.append($("<option />")
@@ -233,7 +239,7 @@
                     });
                     var_select.on("change", function(e) {
                                                 t = $(e.currentTarget);
-                                                units_select = t.parent().find("select[name=units]");
+                                                units_select = t.parent().parent().find("select[name=units]");
                                                 units_select.empty();
                                                 if (station.variables.hasOwnProperty(t.val())) {
                                                     $.each(station.variables[t.val()], function(i, u) {
@@ -244,17 +250,20 @@
                                                 }
                                             });
                     var_select.trigger("change");
-                    target.parent().find("button[name=add]").removeAttr("disabled");
+                    target.parent().parent().find("button[name=add]").removeAttr("disabled");
                 }
                 
             }));
 
+            root.append($("<label />").attr("for", "variable").text("Variable"));
             root.append($("<select />")
                             .attr("name", "variable"));
 
+            root.append($("<label />").attr("for", "units").text("Unit"));
             root.append($("<select />")
                             .attr("name", "units"));
 
+            root.append($("<label />").attr("for", "comparator").text("Comparator"));
             root.append($("<select />")
                             .attr("name", "comparator")
                             .append($("<option />")
@@ -267,6 +276,7 @@
                                 .attr("value", "=")
                                 .html("=")));
 
+            root.append($("<label />").attr("for", "value").text("Value"));
             root.append($("<input />")
                             .attr("name", "value")
                             .attr("type", "textfield"));
@@ -729,6 +739,7 @@
                         }
                         $( "#alerts" ).accordion( "refresh" );
                         $( "#alerts" ).accordion( "option", "active", 0 );
+                        $.sparkline_display_visible();
                         syncMapWithAlert(saved_alerts[0],true);
                     });
                 });
@@ -774,13 +785,14 @@
 
         <div class='clear'></div>
 
-        <h2>Alerts</h2>
-        <div id="alerts"></div>
-        <div id='map_wrapper'>
-            <div id="searchDiv">Search for a station: <input id="search"></div>
-            <div id="map"></div>
+        <div id="page_wrapper">
+            <div id="alerts"></div>
+            <div id='map_wrapper'>
+                <div id="searchDiv">Search for a station: <input id="search"></div>
+                <div id="map"></div>
+            </div>
+            <div class="clear"></div>
         </div>
-        <div class="clear"></div>
 
     {%- else -%}
 
