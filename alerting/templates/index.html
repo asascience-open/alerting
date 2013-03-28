@@ -29,7 +29,6 @@
         function buildAlertHeader(alert) {
 
             var del_link =  $("<a />")
-                                .html("Delete")
                                 .attr("class","alert_delete")
                                 .attr("href", alert.destroy_url)
                                 .on("click", function(e) {
@@ -122,7 +121,7 @@
 
             data = cond['timeseries'];
 
-            var root = $('<div />');
+            var root = $('<div />').attr("class", "condition");
 
             root.append($("<span />").html(cond.variable + " (" + cond.units + ") " + cond.comparator + " " + cond.value));
             
@@ -131,7 +130,7 @@
                 linechart.sparkline(data, {
                     type: 'line',
                     width: '150',
-                    height: '30',
+                    height: '20',
                     lineColor: '#0000f0',
                     fillColor: '#c0d0f0',
                     spotRadius: 0,
@@ -142,8 +141,9 @@
 
             root.append(linechart);
 
-            root.append($("<button />")
-                            .html("Delete")
+            root.append($("<a />")
+                            .attr("class","condition_delete")
+                            .attr("href", cond.destroy_url)
                             .on("click", function(e) {
                                 e.preventDefault();
                                 $.post(cond.destroy_url

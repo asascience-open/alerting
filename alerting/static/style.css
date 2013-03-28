@@ -109,8 +109,24 @@ form {
     float: left;
 }
 
+.condition {
+    height: 22px;
+}
+
 .alert_delete {
+    width: 24px;
+    height: 24px;
+    display: block;
+    background: url('/static/images/close-22.png') no-repeat;
     float: right;
+}
+
+.condition_delete {
+    width: 16px;
+    height: 16px;
+    display: block;
+    background: url('/static/images/close-16.png') no-repeat;
+    float: right;   
 }
 
 #alerts {
