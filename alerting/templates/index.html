@@ -158,7 +158,7 @@
                                         }
                                         // Add condition to saved_alerts
                                         var remove_index = -1;
-                                        var active_index = $( "#alerts" ).accordion( "option", "active" );
+                                        var active_index = getActiveAlertIndex();
                                         for (var i = 0 ; i < saved_alerts[active_index].conditions.length ; i++) {
                                             if (saved_alerts[active_index].conditions[i]._id == cond._id) {
                                                 remove_index = i;
@@ -290,14 +290,15 @@
                                                 $("form[name=" + link.attr("id") + "]").before(station_dom);
                                             }
                                             station_dom.append(buildCondition(alert, condition));
-                                        }
-                                        // Add condition to saved_alerts
-                                        var active_index = $( "#alerts" ).accordion( "option", "active" );
-                                        saved_alerts[active_index].conditions.push(condition);
 
-                                        $.sparkline_display_visible();
-                                        $( "#alerts" ).accordion( "refresh" );
-                                        syncMapWithAlert(alert,true);
+                                            // Add condition to saved_alerts
+                                            getActiveAlert().conditions.push(condition);
+
+                                            $.sparkline_display_visible();
+                                            $( "#alerts" ).accordion( "refresh" );
+                                            syncMapWithAlert(alert,true);
+                                        }
+
                                     }
                                 )})
                             );
@@ -407,13 +408,35 @@
           }
         }
 
+        function getActiveAlertIndex() {
+            var active_index = $( "#alerts" ).accordion( "option", "active" );
+            if (active_index == -1) {
+                return saved_alerts.length - 1
+            } else if (active_index === false) {
+                return null;
+            } else {
+                return active_index;
+            }
+        }
+
+        function getActiveAlert() {
+            var active_index = $( "#alerts" ).accordion( "option", "active" );
+            if (active_index == -1) {
+                active_alert = saved_alerts.slice(active_index, saved_alerts.length)[0];
+            } else if (active_index === false) {
+                active_alert = null;
+            } else {
+                active_alert = saved_alerts[active_index];
+            }
+            return active_alert;
+        }
+
         function gotoCondition(station_id, sensorName) {
           // This should set the Condition values to the station and parameter that was clicked,
           // allowing the user to quickly add an alert for this parameter.
-          var active_index = $( "#alerts" ).accordion( "option", "active" );
-          var active_alert = null;
+          active_alert = getActiveAlert();
 
-          if (active_index === false) {
+          if (active_alert == null) {
             // THERE ARE NO ALERTS
             $.ajax({
                 type    : 'POST',
@@ -424,8 +447,6 @@
                 addAlert(alert);
                 active_alert = alert;
             });
-          } else {
-            active_alert = saved_alerts[active_index];
           }
 
           var form_dom =  $("form[name=" + active_alert._id + "]")
@@ -646,14 +667,8 @@
                 $( "#alerts" ).on("accordionactivate", function(event, ui) {
                     $(ui.newPanel).find("select[name=station]").trigger("change");
                     $.sparkline_display_visible();
-                    var active_index = $( "#alerts" ).accordion( "option", "active" );
-                    var active_alert = null;
-                    if (active_index == -1) {
-                        active_alert = saved_alerts.slice(active_index, saved_alerts.length)[0];
-                    } else {
-                        active_alert = saved_alerts[active_index];
-                    }
-                    syncMapWithAlert(active_alert,true);
+
+                    syncMapWithAlert(getActiveAlert() ,true);
                     $( "#alerts" ).accordion( "refresh" );
                 });
 
