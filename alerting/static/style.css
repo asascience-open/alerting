@@ -119,7 +119,8 @@ form {
 }
 
 #map_wrapper {
-    width: 448px;    
+    width: 448px;
+    height: 500px;
     float: right;
     }
 

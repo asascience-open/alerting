@@ -43,12 +43,14 @@
                                             var header = $(e.currentTarget).closest('h3');
                                             var contents = header.next('div');
 
-                                            // Only refresh map when we delete the active alert
-                                            if (contents.css("display") != "none") {
-                                                $( "#alerts" ).accordion( "refresh" );
+                                            // Only refresh map when we delete the active alert or remove last alert
+                                            if ((contents.css("display") != "none") || (saved_alerts.length == 0)) {
                                                 syncMapWithAlert(null);
                                             }
-                                            header.add(contents).fadeOut('slow',function(){ header.remove(); contents.remove() });
+                                            
+                                            header.remove();
+                                            contents.remove();
+                                            $( "#alerts" ).accordion( "refresh" );
 
                                         });
                                     return false;
@@ -405,25 +407,41 @@
           }
         }
 
-        function gotoCondition(station_id,sensorName) {
+        function gotoCondition(station_id, sensorName) {
           // This should set the Condition values to the station and parameter that was clicked,
           // allowing the user to quickly add an alert for this parameter.
           var active_index = $( "#alerts" ).accordion( "option", "active" );
-          alert = saved_alerts[active_index];
-          var form_dom =  $("form[name=" + alert._id + "]")
+          var active_alert = null;
+
+          if (active_index === false) {
+            // THERE ARE NO ALERTS
+            $.ajax({
+                type    : 'POST',
+                url     : "{{ url_for('new_alert') }}",
+                data    : $("#alert_form").serialize(),
+                async   : false,
+            }).done(function(alert) {
+                addAlert(alert);
+                active_alert = alert;
+            });
+          } else {
+            active_alert = saved_alerts[active_index];
+          }
+
+          var form_dom =  $("form[name=" + active_alert._id + "]")
           var station_dom =  form_dom.parent().find("#" + station_id);
           if (station_dom.length > 0) {
             // Highlight station listing
             station_dom.effect("highlight", {}, 1000);
           }
 
-          // Populate condition fields with information
-          form_dom.find("select[name=station]").val(station_id).effect("highlight", {}, 1000).trigger("change");
-          // This is SO hacky... but we don't know when the "change" event will be done and the select box will
-          // contain the variables we need to set with .val().
-          setTimeout(function() {
-            form_dom.find("select[name=variable]").val(sensorName).effect("highlight", {}, 1000).trigger("change");
-          }, 300);
+          $.when(
+            // Populate condition fields with information
+            form_dom.find("select[name=station]").val(station_id).trigger("change")
+          ).done(function() {
+            form_dom.find("select[name=variable]").val(sensorName).trigger("change");
+            form_dom.effect("highlight", {}, 1000);
+          })
         }
 
         function pokeMap() {
