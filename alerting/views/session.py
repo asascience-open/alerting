@@ -3,9 +3,11 @@ from alerting import db, app, facebook, google
 from json import loads
 from werkzeug import url_encode
 from urllib2 import Request, urlopen, URLError
+from alerting.utils import jsonify, nocache
 
 
 @app.route('/logout')
+@nocache
 def logout():
     session.pop('facebook_token', None)
     session.pop('google_token', None)
@@ -16,6 +18,7 @@ def logout():
 
 # FACEBOOK
 @app.route('/login_facebook')
+@nocache
 def login_facebook():
     return facebook.authorize(callback=url_for('facebook_authorized',
                               next=request.args.get('next') or request.referrer or None,
@@ -23,6 +26,7 @@ def login_facebook():
 
 @app.route('/login/facebook_authorized')
 @facebook.authorized_handler
+@nocache
 def facebook_authorized(resp):
     if resp is None:
         flash('Access denied')
@@ -44,11 +48,13 @@ def get_facebook_oauth_token():
 
 #GOOGLE
 @app.route('/login_google')
+@nocache
 def login_google():
     return google.authorize(callback=url_for('google_authorized',_external=True))
 
 @app.route('/login/google_authorized')
 @google.authorized_handler
+@nocache
 def google_authorized(resp):
     if resp is None:
         flash('Access denied')

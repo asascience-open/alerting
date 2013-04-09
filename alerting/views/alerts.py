@@ -5,11 +5,12 @@ import json
 from flask import render_template, session, request, Response, url_for
 
 from alerting import app, db
-from alerting.utils import jsonify
+from alerting.utils import jsonify, nocache
 
 from alerting.models.alert import Alert
 
 @app.route('/alerts', methods=['GET'])
+@nocache
 def alerts():
     user = session.get('user_email', None)
     alerts = list(db.Alert.find({ 'email' : user }))

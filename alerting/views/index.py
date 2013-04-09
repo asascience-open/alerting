@@ -4,6 +4,7 @@ from alerting import app, db
 
 from alerting.models.alert import Alert
 from alerting.models.station import parse_stations
+from alerting.utils import nocache
 
 
 @app.route('/', methods=['GET'])
@@ -20,6 +21,7 @@ def index():
 
 
 @app.route('/reindex', methods=['GET'])
+@nocache
 def reindex():
     parse_stations()
     return jsonify({"message" : "success"})
