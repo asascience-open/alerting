@@ -96,6 +96,8 @@
 
             content.append(ul);
 
+            classifyList(ul);
+
             return content;
         }
 
@@ -150,6 +152,7 @@
                                     ,null
                                     ,function() {
                                         var station_div = $(e.currentTarget).parent().parent();
+                                        var list_div = station_div.parent();
                                         // Remove condition that was clicked
                                         $(e.currentTarget).parent().remove();
                                         // Remove station heading if there are no more conditions
@@ -170,6 +173,7 @@
                                         }
 
                                         $( "#alerts" ).accordion( "refresh" );
+                                        classifyList(list_div);
                                         syncMapWithAlert(alert);
                                     }
                                 )})
@@ -304,6 +308,8 @@
                                             // Add condition to saved_alerts
                                             getActiveAlert().conditions.push(condition);
 
+                                            classifyList(station_dom.closest("ul"));
+
                                             $.sparkline_display_visible();
                                             $( "#alerts" ).accordion( "refresh" );
                                             syncMapWithAlert(alert,true);
@@ -314,6 +320,12 @@
                             );
 
             return root;
+        }
+
+        function classifyList(element) {
+            $.each($(element).find("li"), function(i,e) {
+                $(e).attr("class", i % 2 == 0 ? "even" : "odd");
+            });
         }
 
         function addAlert(alert) {
