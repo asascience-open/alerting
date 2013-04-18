@@ -17,17 +17,31 @@ class Condition(Document):
         'comparator'        : unicode,
         'value'             : float,
         'created'           : datetime,
-        'updated'           : datetime
+        'updated'           : datetime,
+        'triggered'         : datetime  # The last time the condition was met
     }
     required_fields = ['station_id', 'comparator', 'value', 'created', 'updated', 'variable', 'units']
     default_values = { 'created': datetime.utcnow, 'updated': datetime.utcnow }
 
-    COMPARATORS = [">=", "<=", "="]
+    COMPARATORS = ["<", "=", ">"]
+    CMP_RETURNS = [-1,   0,   1]
 
     def station(self):
         return db.Station.find_one({ '_id' : self.station_id })
 
     def data(self):
         return self.station().data(variable=self.variable, units=self.units)
+
+    def times(self):
+        return self.station().times(variable=self.variable)
+
+    def times_and_data(self):
+        return self.station().times_and_data(variable=self.variable, units=self.units)
+
+    def check(self, date_value_tuples):
+        # Get the return value that cmp should return for the comparator
+        comparator_value = Condition.CMP_RETURNS[Condition.COMPARATORS.index(self.comparator)]
+        triggering = filter(lambda (t,d): cmp(d, self.value) == comparator_value, date_value_tuples)
+        return triggering
 
 db.register([Condition])

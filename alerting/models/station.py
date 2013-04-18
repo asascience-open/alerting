@@ -9,6 +9,8 @@ from alerting import db, app
 from shapely.wkt import loads
 from shapely.geometry import Point
 
+import pytz
+
 class Station(Document):
     __collection__ = 'stations'
     use_schemaless = True
@@ -29,7 +31,8 @@ class Station(Document):
     required_fields = ['latitude', 'longitude', 'geometry','timeseries','provider','created', 'updated']
     default_values = { 'created': datetime.utcnow, 'updated': datetime.utcnow }
 
-    fill_values = ["-999999", -999999]
+    data_fill_values = ["-999999", -999999]
+    time_fill_values = ["-999999", -999999]
 
     def variables(self):
         variables = {}
@@ -50,7 +53,19 @@ class Station(Document):
 
     def data(self, variable=None, units=None):
         if self.timeseries and variable is not None and units is not None:
-            return [float(x) for x in self.timeseries[variable][u'v'][units] if x not in Station.fill_values]
+            return [float(x) for x in self.timeseries[variable][u'v'][units] if x not in Station.data_fill_values]
+        else:
+            return []
+
+    def times(self, variable=None):
+        if self.timeseries and variable is not None:
+            return [datetime.fromtimestamp(x) for x in self.timeseries[variable][u't'] if x not in Station.time_fill_values]
+        else:
+            return []
+
+    def times_and_data(self, variable=None, units=None):
+        if self.timeseries and variable is not None and units is not None:
+            return [(datetime.fromtimestamp(t), float(d)) for t,d in zip(self.timeseries[variable][u't'], self.timeseries[variable][u'v'][units]) if d not in Station.data_fill_values and t not in Station.time_fill_values]
         else:
             return []
 

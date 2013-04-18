@@ -1,6 +1,8 @@
 import os
 import urlparse
 
+REDIS_URL = os.getenv('REDISTOGO_URL')
+
 mongolab_uri = os.environ.get('MONGOLAB_URI')
 url = urlparse.urlparse(mongolab_uri)
 # Database

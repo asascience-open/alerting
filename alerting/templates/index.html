@@ -62,7 +62,7 @@
                               .append("<br />")
                               .append($("<span />").attr('class','last_text').html("Last notification sent: " + alert.sent))
                               .append("<br />")
-                              .append($("<span />").attr('class','last_text').html("Notification of alert every: " + alert.frequency));
+                              .append($("<span />").attr('class','last_text').html("Notification of new alerts sent every: " + alert.frequency));
         }
 
         function buildAlertContents(alert) {
@@ -271,14 +271,14 @@
             root.append($("<select />")
                             .attr("name", "comparator")
                             .append($("<option />")
-                                .attr("value", "<=")
-                                .html("<="))
+                                .attr("value", "<")
+                                .text("<"))
                             .append($("<option />")
-                                .attr("value", ">=")
-                                .html(">="))
+                                .attr("value", ">")
+                                .text(">"))
                             .append($("<option />")
                                 .attr("value", "=")
-                                .html("=")));
+                                .text("=")));
 
             root.append($("<label />").attr("for", "value").text("Value"));
             root.append($("<input />")
@@ -777,7 +777,7 @@
             <form id="alert_form">
                 <label for="name">Name</label>
                 <input type="textfield" id="name" name="name" />
-                <label for="frequency">Notify me of alerts every</label>
+                <label for="frequency">Notify me of new alerts every</label>
                 <select type="select" id="frequency" name="frequency">
                     <option value="10">10 minutes</option>
                     <option value="20">20 minutes</option>

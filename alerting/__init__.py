@@ -42,5 +42,20 @@ google = oauth.remote_app('google',
 # Create the database connection
 db = MongoKit(app)
 
+# Create the Redis connection
+import redis
+from rq import Queue
+redis_connection = redis.from_url(app.config.get("REDIS_URL"))
+queue = Queue('default', connection=redis_connection, default_timeout=600)
+
+from rq_scheduler import Scheduler
+scheduler = Scheduler(queue_name="default", connection=redis_connection)
+
+# Setup RQ Dashboard
+from rq_dashboard import RQDashboard
+RQDashboard(app)
+
 # Import everything
 import alerting.views
+import alerting.models
+import alerting.tasks

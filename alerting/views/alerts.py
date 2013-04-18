@@ -1,13 +1,16 @@
 from bson.objectid import ObjectId
 from bson import json_util
 import json
+from datetime import datetime, timedelta
 
 from flask import render_template, session, request, Response, url_for
 
-from alerting import app, db
+from alerting import app, db, scheduler
 from alerting.utils import jsonify, nocache
 
 from alerting.models.alert import Alert
+
+from alerting.tasks.check_alert import check
 
 @app.route('/alerts', methods=['GET'])
 @nocache
@@ -46,13 +49,23 @@ def new_alert():
         alert.save()
     except Exception as e:
         app.logger.warn(e.message)
-        alert = { "error" : e.message }
+        return jsonify({ "error" : e.message })
 
     alert['frequency'] = alert.user_friendly_frequency()
     alert['checked'] = alert.user_friendly_checked()
     alert['sent'] = alert.user_friendly_sent()
     alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
     alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
+
+    # Schedule job to check and send emails if needed
+    scheduler.schedule(
+        scheduled_time=datetime.now(),  # Time for first execution
+        func=check,                     # Function to be queued
+        args=(unicode(alert._id),),     # Arguments passed into function when executed
+        interval=60,                    # Time before the function is called again, in seconds
+        repeat=None,                    # Repeat this number of times (None means repeat forever)
+        result_ttl=120                  # How long to keep the results    
+    )
 
     return jsonify(alert)
 

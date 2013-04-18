@@ -1,10 +1,6 @@
 from flask import render_template, session, jsonify
-
-from alerting import app, db
-
+from alerting import app, db, scheduler
 from alerting.models.alert import Alert
-from alerting.models.station import parse_stations
-from alerting.utils import nocache
 
 
 @app.route('/', methods=['GET'])
@@ -19,9 +15,6 @@ def index():
 
     return render_template('index.html', alerts=alerts, stations=stations)
 
-
-@app.route('/reindex', methods=['GET'])
-@nocache
-def reindex():
-    parse_stations()
-    return jsonify({"message" : "success"})
+@app.route('/jobs', methods=['GET'])
+def jobs():
+    return jsonify({ "jobs" : str(scheduler.get_jobs()) })
