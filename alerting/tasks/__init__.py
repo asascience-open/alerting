@@ -1,1 +1,1 @@
-from alerting.tasks import reindex_stations, check_alerts
+from alerting.tasks import reindex_stations, check_alert
