@@ -11,7 +11,7 @@ from alerting.utils import jsonify, nocache
 
 from alerting.models.alert import Alert
 
-from alerting.tasks.reindex_stations import reindex
+from alerting.tasks.reindex_stations import reindex_stations
 
 @app.route('/stations', methods=['GET'])
 def stations():
