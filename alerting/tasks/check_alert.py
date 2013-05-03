@@ -29,21 +29,20 @@ def check(alert_id):
         # an email within the requested frequency already.
         if not alert.active:
             app.logger.debug("Alert NOT sent.  Is not active.")
-            return False
+            return "Alert NOT sent.  Is not active."
 
         if len(data_to_send) < 1:
             app.logger.debug("Alert NOT sent.  No condition matched.")
-            return False
+            return "Alert NOT sent.  No condition matched."
 
         if datetime.utcnow() < can_send_next:
             app.logger.debug("Alert NOT sent.  Already sent within frequency.")
-            return False
+            return "Alert NOT sent.  Already sent within frequency."
 
         # Send email
-        app.logger.debug("Alert sent")
         app.logger.debug(data_to_send)
 
         alert.sent = datetime.utcnow()
         alert.save()
             
-    return True
+    return "Alert sent"

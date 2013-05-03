@@ -62,9 +62,9 @@ def new_alert():
         scheduled_time=datetime.now(),  # Time for first execution
         func=check,                     # Function to be queued
         args=(unicode(alert._id),),     # Arguments passed into function when executed
-        interval=60,                    # Time before the function is called again, in seconds
+        interval=300,                   # Time before the function is called again, in seconds
         repeat=None,                    # Repeat this number of times (None means repeat forever)
-        result_ttl=120                  # How long to keep the results    
+        result_ttl=600                  # How long to keep the results    
     )
 
     return jsonify(alert)

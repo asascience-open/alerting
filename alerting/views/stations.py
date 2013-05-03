@@ -39,18 +39,22 @@ def stations():
 
 @app.route('/stations/reindex', methods=['GET'])
 def reindex():
-    jobs = scheduler.get_jobs()
+    user = session.get('user_email', None)
+    if user == "wilcox.kyle@gmail.com":
+        jobs = scheduler.get_jobs()
 
-    for job in jobs:
-        if job.func == reindex:
-           scheduler.cancel(job)
-    
-    scheduler.schedule(
-        scheduled_time=datetime.now(),  # Time for first execution
-        func=reindex,                   # Function to be queued
-        interval=60,                    # Time before the function is called again, in seconds
-        repeat=None,                    # Repeat this number of times (None means repeat forever)
-        result_ttl=120                  # How long to keep the results    
-    )
+        for job in jobs:
+            if job.func == reindex_stations or job.description == "alerting.views.stations.reindex()":
+               scheduler.cancel(job)
+        
+        scheduler.schedule(
+            scheduled_time=datetime.now(),  # Time for first execution
+            func=reindex_stations,          # Function to be queued
+            interval=300,                   # Time before the function is called again, in seconds
+            repeat=None,                    # Repeat this number of times (None means repeat forever)
+            result_ttl=600                  # How long to keep the results
+        )
 
-    return jsonify({"message" : "scheduled"})
+        return jsonify({"message" : "scheduled"})
+    else:
+        return jsonify({ "error" : "permission denied" })
