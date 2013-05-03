@@ -2,7 +2,7 @@ import os
 
 DEBUG = True
 
-REDIS_URL = os.getenv('REDIS_URL')
+REDIS_URL = os.getenv('REDIS_URI')
 
 # Database
 MONGODB_HOST = 'localhost'
