@@ -1,6 +1,7 @@
 from flask import Flask
 from flask.ext.mongokit import MongoKit
 from flask.ext.oauth import OAuth
+from flask.ext.login import LoginManager
 
 # Create application object
 app = Flask(__name__)
@@ -55,7 +56,18 @@ scheduler = Scheduler(queue_name="default", connection=redis_connection)
 from rq_dashboard import RQDashboard
 RQDashboard(app)
 
+# Create the Flask-Login manager
+login_manager = LoginManager()
+
+from bson.objectid import ObjectId
+@login_manager.user_loader
+def load_user(userid):
+    return db.User.find_one({ '_id' : ObjectId(userid) })
+
+login_manager.init_app(app)
+
 # Import everything
 import alerting.views
 import alerting.models
 import alerting.tasks
+

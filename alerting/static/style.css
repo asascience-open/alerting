@@ -82,16 +82,55 @@ form {
     margin: 0 auto;
 }
 
-    #welcome #logins {
+    #welcome #social_logins {
+        margin: 40px auto 0 auto;
         text-align: center;
-        width: 400px;
-        margin: 0 auto;
     }
 
-    #welcome #logins a {
-        display: block;
-        padding: 10px;
+    #welcome #social_logins a {
+        margin: 10px;
+        text-decoration: none;
     }
+
+    #welcome #social_logins a img {
+        width: 200px;
+    }
+
+    #welcome #logins {
+        text-align: center;
+        width: 100%;
+        margin: 70px auto;
+    }
+
+    #welcome #logins div {
+        float: left;
+        width: 50%;
+    }
+
+    #welcome #logins label {
+        clear: both;
+        width: 30%;
+        float: left;
+    }
+
+    #welcome #logins input {
+        border: 1px solid #aaa;
+        padding: 2px;
+    }
+
+    #welcome #logins #local input[type=text] {
+        float: left;
+        width: 50%;
+    }
+
+    #welcome #logins #local input[type=password] {
+        float: left;
+        width: 50%;
+    }
+    #welcome #logins #local input[type=submit] {
+        float: right;
+    }    
+
 
 #left_notes {
     float: left;

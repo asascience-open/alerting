@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from flask import render_template, session, jsonify
+from flask.ext.login import current_user, login_required
+
 from alerting import app, db, scheduler
 from alerting.models.alert import Alert
 
@@ -9,15 +11,7 @@ from alerting.tasks.regulator import regulate
 
 @app.route('/', methods=['GET'])
 def index():
-    user = session.get('user_email', None)
-    alerts = []
-    stations = []
-
-    if user:
-        alerts = db.Alert.find({ 'email' : user })
-        stations = db.Station.find()
-
-    return render_template('index.html', alerts=alerts, stations=stations)
+    return render_template('index.html', user=current_user)
 
 def serialize_date(date):
     if date is not None:
@@ -38,9 +32,9 @@ def serialize_job(job,dt):
         meta=job.meta)
 
 @app.route('/jobs', methods=['GET'])
+@login_required
 def jobs():
-    user = session.get('user_email', None)
-    if user == "wilcox.kyle@gmail.com":
+    if current_user.email == "wilcox.kyle@gmail.com":
         jobs = []
         for job,dt in scheduler.get_jobs(with_times=True):
             jobs.append(serialize_job(job,dt))
@@ -48,10 +42,15 @@ def jobs():
     else:
         return jsonify({ "error" : "permission denied" })
 
+@app.route('/clear_users', methods=['GET'])
+def clear_users():
+    db.drop_collection('users')
+    return jsonify({ "message" : "ok" })
+
 @app.route('/regulate', methods=['GET'])
+@login_required
 def reg():
-    user = session.get('user_email', None)
-    if user == "wilcox.kyle@gmail.com":
+    if current_user.email == "wilcox.kyle@gmail.com":
 
         jobs = map(lambda x: x.func, scheduler.get_jobs())
 
@@ -66,4 +65,4 @@ def reg():
             return jsonify({"message" : "regulated"})
         return jsonify({ "message" : "no need to regulate" })
     else:
-        return jsonify({ "error" : "permission denied" })        
+        return jsonify({ "error" : "permission denied" })

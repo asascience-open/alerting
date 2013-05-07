@@ -540,7 +540,7 @@
         }
 
         $(document).ready(function() {
-            {%- if session.get('user_email', None) -%}
+            {%- if user.is_active() -%}
 
                 var lyr = new OpenLayers.Layer.Vector(
                    'Stations'
@@ -771,7 +771,7 @@
 {% endblock %}
 {% block page %}
 
-    {%- if session.get('user_email', None) -%}
+    {%- if user.is_active() -%}
 
         <div id='left_notes'>
             <form id="alert_form">
@@ -791,7 +791,7 @@
             <button name="alert_create_button" id="alert_create_button">Create Alert</button>
         </div>
         <div id='right_notes'>
-            <div>Signed in as {{ session.get('user_email') }}</div>
+            <div>Signed in as {{ user.email }}</div>
             <a href="{{ url_for('logout') }}">sign out</a>
         </div>
 
@@ -814,16 +814,40 @@
                 GLOS Alerts allows you to create alerts with different variables related to the water temperature, salinity, wave height and direction. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
             </p>
 
-            <div id='logins'>
+            <div id="social_logins">
                 <a href="{{ url_for('login_google') }}">
                     <img src="{{ url_for('.static', filename='images/google.png') }}" />
-                    <span>Login using your google account</span>
                 </a>
                 <a href="{{ url_for('login_facebook') }}">
                     <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
-                    <span>Login using your facebook account</span>
                 </a>
+                <h4>We only use the above services to verify your email address.</h4>
+                <h4>No additional information is ever collected or shared.</h4>
+                <div class="clear"></div>
             </div>
+
+            <div id='logins'>
+                <h2>Prefer not to use a social login?</h2>
+                <div>
+                    <h3>Enter your email to create an account:</h3>
+                    <form name="register" method="POST" action="{{ url_for('signup') }}">
+                        <input type="text" name="email" />
+                        <input type="submit" name="submit" value="Create" />
+                    </form>
+                </div>
+                <div id="local">
+                    <h3>Already have an account?</h3>
+                    <form name="register" method="POST" action="{{ url_for('login_local') }}">
+                        <label for="email">Email</label>
+                        <input type="text" name="email" />
+                        <label for="password">Password</label>
+                        <input type="password" name="password" />
+                        <input type="submit" name="submit" value="Login" />
+                    </form>
+                </div>
+
+            </div>
+            <div class="clear"></div>
 
         </div>
 

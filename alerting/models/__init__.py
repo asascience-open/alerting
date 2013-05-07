@@ -1,1 +1,1 @@
-from alerting.models import alert, station, condition
+from alerting.models import alert, station, condition, user
