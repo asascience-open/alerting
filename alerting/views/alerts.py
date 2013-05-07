@@ -16,7 +16,6 @@ from alerting.tasks.check_alert import check
 @app.route('/alerts', methods=['GET'])
 @nocache
 def alerts():
-    app.logger.info(current_user.email)
     alerts = list(db.Alert.find({ 'email' : current_user.email }))
 
     for a in alerts:
