@@ -138,6 +138,7 @@ form {
 
 #right_notes {
     float: right;
+    text-align: right;
 }
 
 .clear {

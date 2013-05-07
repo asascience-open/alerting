@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 
 from flask import render_template, session, request, Response, url_for
+from flask.ext.login import current_user
 
 from alerting import app, db, scheduler
 from alerting.utils import jsonify, nocache
@@ -15,8 +16,7 @@ from alerting.tasks.reindex_stations import reindex_stations
 
 @app.route('/stations', methods=['GET'])
 def stations():
-    user = session.get('user_email', None)
-    if user is None:
+    if current_user is None:
     	return jsonify({ "error" : "Must be logged in" })
 
     stations = db.Station.find()
@@ -39,8 +39,7 @@ def stations():
 
 @app.route('/stations/reindex', methods=['GET'])
 def reindex():
-    user = session.get('user_email', None)
-    if user == "wilcox.kyle@gmail.com":
+    if current_user and current_user.email == u"wilcox.kyle@gmail.com":
         jobs = scheduler.get_jobs()
 
         for job in jobs:

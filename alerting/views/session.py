@@ -39,15 +39,17 @@ def facebook_authorized(resp):
     #request 'me' to get user id and email
     me = facebook.get('/me')
 
-    email = me.data['email']
-    user = db.User.find_one({ 'email' : unicode(email) })
+    email = unicode(me.data['email'])
+    user = db.User.find_one({ 'email' : email })
     if user is None:
         user = register_user(email, password=None, confirmed=True)
     
     login_user(user)
-    #flash("Signed in as %s" % user.email)
 
-    next_url = request.args.get('next') or url_for('index')
+    if user.password is None:
+        next_url = url_for('set_password')
+    else:
+        next_url = request.args.get('next') or url_for('index')
     return redirect(next_url)
 
 @facebook.tokengetter
@@ -77,16 +79,19 @@ def google_authorized(resp):
     try:
         res = urlopen(req)
 
-        email = loads(res.read()).get(u'email')
-        user = db.User.find_one({ 'email' : unicode(email) })
+        email = unicode(loads(res.read()).get(u'email'))
+        user = db.User.find_one({ 'email' : email })
         if user is None:
             user = register_user(email, password=None, confirmed=True)
 
         login_user(user)
-        #flash("Signed in as %s" % user.email)
 
-        next_url = request.referrer or url_for('index')
+        if user.password is None:
+            next_url = url_for('set_password')
+        else:
+            next_url = request.referrer or url_for('index')
         return redirect(next_url)
+
     except URLError, e:
         if e.code == 401:
             # Unauthorized - bad token
@@ -97,7 +102,7 @@ def google_authorized(resp):
 @app.route("/set_password", methods=["GET"])
 def set_password():
     if current_user.is_active():
-        return render_template('set_password.html', user=current_user)
+        return render_template('set_password.html')
     else:
         return redirect(url_for('index'))
 
@@ -112,7 +117,8 @@ def save_password():
             return redirect(url_for('set_password'))
 
         if password == confirm:
-            user.password = user.generate_password(password)
+            current_user.password = current_user.generate_password(password)
+            current_user.save()
             flash("New password set")
             return redirect(url_for('index'))
         else:
@@ -143,11 +149,11 @@ def signup():
 
 @app.route("/login_local", methods=["POST"])
 def login_local():
-    email = request.form.get("email")
-    password = request.form.get("password")
+    email = request.form.get("email",'')
+    password = request.form.get("password",'')
 
-    if len(password) < 5:
-        flash("Incorrect password for '%s'" % email)
+    if email == '' or password == '':
+        flash("Invalid login")
         return redirect(url_for('index'))
 
     user = db.User.find_one({ 'email' : unicode(email) })
@@ -185,7 +191,8 @@ def register_user(email, password=None, confirmed=False):
     user.email = email
 
     if password is not None:
-        user.password = user.generate_password(password)
+        password = user.generate_password(password)
+    user.password = password
 
     user.confirmed = confirmed
     if confirmed is False:

@@ -792,6 +792,8 @@
         </div>
         <div id='right_notes'>
             <div>Signed in as {{ user.email }}</div>
+            <a href="{{ url_for('set_password') }}">change /set password</a>
+            <span> | </span>
             <a href="{{ url_for('logout') }}">sign out</a>
         </div>
 

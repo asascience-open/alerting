@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timedelta
 
 from flask import render_template, session, request, Response, url_for
+from flask.ext.login import current_user
 
 from alerting import app, db, scheduler
 from alerting.utils import jsonify, nocache
@@ -15,8 +16,8 @@ from alerting.tasks.check_alert import check
 @app.route('/alerts', methods=['GET'])
 @nocache
 def alerts():
-    user = session.get('user_email', None)
-    alerts = list(db.Alert.find({ 'email' : user }))
+    app.logger.info(current_user.email)
+    alerts = list(db.Alert.find({ 'email' : current_user.email }))
 
     for a in alerts:
         a['frequency'] = a.user_friendly_frequency()
@@ -36,10 +37,8 @@ def alerts():
 
 @app.route('/alerts/new', methods=['POST'])
 def new_alert():
-    user = session.get('user_email', None)
-
     alert = db.Alert()
-    alert.email = user
+    alert.email = current_user.email
     alert.name = request.form.get("name", "")
     alert.frequency = int(request.form.get("frequency", 60))
     if alert.name == "":
@@ -71,9 +70,7 @@ def new_alert():
 
 @app.route('/alerts/<ObjectId:alert_id>/destroy', methods=['POST'])
 def destroy_alert(alert_id):
-    user = session.get('user_email', None)
-
-    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : user })
+    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : current_user.email })
     if alert is not None:
         for c in alert.conditions:
             try:
@@ -87,9 +84,8 @@ def destroy_alert(alert_id):
 
 @app.route('/alerts/<ObjectId:alert_id>/conditions/new', methods=['POST'])
 def new_condition(alert_id):
-    user = session.get('user_email', None)
 
-    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : user })
+    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : current_user.email })
     if alert is None:
         return jsonify({"message" : "No alert found with that ID"})
     else:
@@ -120,9 +116,8 @@ def new_condition(alert_id):
 
 @app.route('/alerts/<ObjectId:alert_id>/conditions/<ObjectId:condition_id>/destroy', methods=['POST'])
 def destroy_condition(alert_id, condition_id):
-    user = session.get('user_email', None)
 
-    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : user })
+    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : current_user.email })
     if alert is None:
         return jsonify({"message" : "No alert found with that ID"})
     else:
@@ -145,8 +140,7 @@ def destroy_condition(alert_id, condition_id):
 
 @app.route('/clear')
 def clear():
-    user = session.get('user_email', None)
-    if user == "wilcox.kyle@gmail.com":
+    if current_user and current_user.email == u"wilcox.kyle@gmail.com":
         db.drop_collection('alerts')
         db.drop_collection('conditions')
         return jsonify({ "message" : "ok" })
