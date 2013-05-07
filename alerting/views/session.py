@@ -7,7 +7,7 @@ from alerting import db, app, facebook, google
 from json import loads
 from werkzeug import url_encode
 from urllib2 import Request, urlopen, URLError
-from alerting.utils import jsonify, nocache
+from alerting.utils import jsonify, nocache, send_email
 
 
 @app.route('/logout')
@@ -144,6 +144,14 @@ def signup():
         return redirect(url_for('index'))
     else:
         # TODO: Send confirmation email
+        send_email("[GLOS Alerts] Please confirm your email address",
+                    app.config.get("MAIL_SENDER"),
+                    [email],
+                    render_template("confirmation_email.txt", 
+                        user=user),
+                    render_template("confirmation_email.html", 
+                        user=user))
+
         flash("Account created.  Please check your email for instructions")
         return redirect(url_for('index'))
 
@@ -174,13 +182,13 @@ def login_local():
     return redirect(url_for('index'))
 
 @app.route('/confirm/<ObjectId:user_id>/<string:confirmation_token>', methods=['GET'])
-def confirm_user(self, user_id, confirmation_token):
+def confirm_user(user_id, confirmation_token):
     user = db.User.find_one({ '_id' : user_id, 'confirmation_token' : unicode(confirmation_token) })
     if user is not None:
         user.confirmed = True
         user.save()
         login_user(user)
-        flash("'%s' has been confirmed. Please set a password below." % user.email)
+        flash("'%s' has been confirmed" % user.email)
         return redirect(url_for('set_password'))
     else:
         flash("There was an error when trying to confirm your account")

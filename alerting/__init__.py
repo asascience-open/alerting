@@ -2,6 +2,7 @@ from flask import Flask
 from flask.ext.mongokit import MongoKit
 from flask.ext.oauth import OAuth
 from flask.ext.login import LoginManager
+from flask.ext.mail import Mail
 
 # Create application object
 app = Flask(__name__)
@@ -58,13 +59,14 @@ RQDashboard(app)
 
 # Create the Flask-Login manager
 login_manager = LoginManager()
-
 from bson.objectid import ObjectId
 @login_manager.user_loader
 def load_user(userid):
     return db.User.find_one({ '_id' : ObjectId(userid) })
-
 login_manager.init_app(app)
+
+# Create the Flask-Mail object
+mail = Mail(app)
 
 # Import everything
 import alerting.views

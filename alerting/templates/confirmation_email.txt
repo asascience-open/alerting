@@ -1,0 +1,8 @@
+Dear {{user.email}},
+
+Thank you for signing up for an account with GLOS Alerts.  Please confirm your email address by clicking below:
+
+{{ url_for("confirm_user", user_id=user._id, confirmation_token=user.confirmation_token, _external=True) }}
+
+Regards,
+GLOS

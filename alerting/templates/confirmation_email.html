@@ -1,0 +1,8 @@
+<p>Dear {{user.email}},</p>
+
+<p>Thank you for signing up for an account with GLOS Alerts.  Please confirm your email address by clicking below:</p>
+
+<a href='{{ url_for("confirm_user", user_id=user._id, confirmation_token=user.confirmation_token, _external=True) }}'>Confirm my email address</a>
+
+<p>Regards,</p>
+<p>GLOS</p>

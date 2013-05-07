@@ -1,6 +1,7 @@
 Flask==0.9
 Flask-MongoKit==0.6
 Flask-Login==0.1.3
+Flask-Mail==0.8.2
 git+http://github.com/mitsuhiko/flask-oauth.git#egg=Flask-OAuth
 gunicorn
 Shapely==1.2.17
