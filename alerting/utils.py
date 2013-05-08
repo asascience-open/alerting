@@ -24,17 +24,4 @@ def nocache(f):
         resp.headers['Cache-Control'] = 'no-cache, no-store'
         return resp
     return update_wrapper(new_func, f)
-
-from flask.ext.mail import Message
-from alerting import app, mail
-from threading import Thread
-
-def async_send(msg):
-    mail.send(msg)
-
-def send_email(subject, sender, recipients, text_body, html_body):
-    msg = Message(subject, sender=sender, recipients=recipients)
-    msg.body = text_body
-    msg.html = html_body
-    thr = Thread(target=async_send, args=[msg])
-    thr.start()
+    

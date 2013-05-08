@@ -20,6 +20,7 @@ def alerts():
 
     for a in alerts:
         a['frequency'] = a.user_friendly_frequency()
+        a['buffer'] = a.user_friendly_buffer()
         a['checked'] = a.user_friendly_checked()
         a['sent'] = a.user_friendly_sent()
         a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
@@ -40,6 +41,7 @@ def new_alert():
     alert.email = current_user.email
     alert.name = request.form.get("name", "")
     alert.frequency = int(request.form.get("frequency", 60))
+    alert.buffer = int(request.form.get("buffer", 60))
     if alert.name == "":
         alert.name = u"Unnamed Alert"
 
@@ -51,6 +53,7 @@ def new_alert():
 
     alert['frequency'] = alert.user_friendly_frequency()
     alert['checked'] = alert.user_friendly_checked()
+    alert['buffer'] = alert.user_friendly_buffer()
     alert['sent'] = alert.user_friendly_sent()
     alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
     alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])

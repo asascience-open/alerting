@@ -68,6 +68,14 @@ login_manager.init_app(app)
 # Create the Flask-Mail object
 mail = Mail(app)
 
+from datetime import datetime
+# Create datetime jinja2 filter
+def datetimeformat(value, format='%a, %b %d %Y at %I:%M%p'):
+    if isinstance(value, datetime):
+        return value.strftime(format)
+    return value
+app.jinja_env.filters['datetimeformat'] = datetimeformat
+
 # Import everything
 import alerting.views
 import alerting.models

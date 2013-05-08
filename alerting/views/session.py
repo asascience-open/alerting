@@ -3,11 +3,12 @@ import uuid
 from flask import request, url_for, render_template, redirect, session, flash
 from flask.ext.login import login_user, logout_user, current_user
 
-from alerting import db, app, facebook, google
+from alerting import db, app, facebook, google, queue
 from json import loads
 from werkzeug import url_encode
 from urllib2 import Request, urlopen, URLError
-from alerting.utils import jsonify, nocache, send_email
+from alerting.utils import jsonify, nocache
+from alerting.tasks.send_email import send
 
 
 @app.route('/logout')
@@ -43,6 +44,10 @@ def facebook_authorized(resp):
     user = db.User.find_one({ 'email' : email })
     if user is None:
         user = register_user(email, password=None, confirmed=True)
+    else:
+        if not user.confirmed:
+            user.confirmed = True
+            user.save()
     
     login_user(user)
 
@@ -83,6 +88,10 @@ def google_authorized(resp):
         user = db.User.find_one({ 'email' : email })
         if user is None:
             user = register_user(email, password=None, confirmed=True)
+        else:
+            if not user.confirmed:
+                user.confirmed = True
+                user.save()
 
         login_user(user)
 
@@ -133,25 +142,22 @@ def signup():
     user = db.User.find_one({ 'email' : unicode(email) })
 
     # User already exists
-    if user is not None:
+    if user is not None and user.confirmed:
         flash("'%s' already has an account. Try logging in below. " % email )
         return redirect(url_for('index'))
     
+    if user is not None and not user.confirmed:
+        send_confirmation(user)
+        flash("Account created.  Please check your email for instructions")
+        return redirect(url_for('index'))
+
     # Create user
     user = register_user(email, password=None, confirmed=False)
     if user is False:
         flash("Please enter a valid email address")
         return redirect(url_for('index'))
     else:
-        # TODO: Send confirmation email
-        send_email("[GLOS Alerts] Please confirm your email address",
-                    app.config.get("MAIL_SENDER"),
-                    [email],
-                    render_template("confirmation_email.txt", 
-                        user=user),
-                    render_template("confirmation_email.html", 
-                        user=user))
-
+        send_confirmation(user)
         flash("Account created.  Please check your email for instructions")
         return redirect(url_for('index'))
 
@@ -193,6 +199,16 @@ def confirm_user(user_id, confirmation_token):
     else:
         flash("There was an error when trying to confirm your account")
         return redirect(url_for('index'))
+
+def send_confirmation(user):
+    queue.enqueue(send,
+            subject="[GLOS Alerts] Please confirm your email address",
+            sender=app.config.get("MAIL_SENDER"),
+            recipients=[user.email],
+            text_body=render_template("confirmation_email.txt", 
+                user=user),
+            html_body=render_template("confirmation_email.html", 
+                user=user))
 
 def register_user(email, password=None, confirmed=False):
     user = db.User()

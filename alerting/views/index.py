@@ -32,9 +32,8 @@ def serialize_job(job,dt):
         meta=job.meta)
 
 @app.route('/jobs', methods=['GET'])
-@login_required
 def jobs():
-    if current_user.email == "wilcox.kyle@gmail.com":
+    if current_user and current_user.email == "wilcox.kyle@gmail.com":
         jobs = []
         for job,dt in scheduler.get_jobs(with_times=True):
             jobs.append(serialize_job(job,dt))
@@ -48,9 +47,8 @@ def clear_users():
     return jsonify({ "message" : "ok" })
 
 @app.route('/regulate', methods=['GET'])
-@login_required
 def reg():
-    if current_user.email == "wilcox.kyle@gmail.com":
+    if current_user and current_user.email == "wilcox.kyle@gmail.com":
 
         jobs = map(lambda x: x.func, scheduler.get_jobs())
 

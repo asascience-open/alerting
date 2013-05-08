@@ -26,16 +26,17 @@ class Alert(Document):
         'checked'           : datetime,     # last time all of the conditions were checked
         'sent'              : datetime,     # last time an alert was sent
         'frequency'         : int,          # number of minutes between alerts
+        'buffer'            : int,          # number of minutes conditions need to occur in to alert
         'active'            : bool          # If alerts should be SENT
     }
-    required_fields = ['email', 'created', 'updated', 'frequency']
-    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 60, 'active' : True }
+    required_fields = ['email', 'created', 'updated', 'frequency', 'buffer']
+    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 60, 'active' : True, 'buffer' : 60 }
 
     def user_friendly_frequency(self):
-        if self.frequency:
-            return human(timedelta(minutes=self.frequency), precision=1, past_tense='{}')
-        else:
-            return "never"
+        return human(timedelta(minutes=self.frequency), precision=1, past_tense='{}')
+
+    def user_friendly_buffer(self):
+        return human(timedelta(minutes=self.buffer), precision=1, past_tense='{}')
 
     def user_friendly_checked(self):
         if self.checked:
@@ -51,11 +52,11 @@ class Alert(Document):
 
     def check(self):
 
-        data_to_send = []
+        data_to_send = {}
 
         for condition in self.conditions:
             try:
-                # Make sure comparator is valud 
+                # Make sure comparator is valid 
                 assert condition.comparator in Condition.COMPARATORS
             except:
                 # Invalid condition, remove it.
@@ -65,9 +66,11 @@ class Alert(Document):
 
                 date_and_values = []
                 if self.checked:
-                    date_and_values = [(t,d) for t,d in condition.times_and_data() if t > self.checked]
+                    check_time = self.checked - timedelta(minutes=self.buffer)
                 else:
-                    date_and_values = condition.times_and_data()
+                    check_time = datetime.utcnow() - timedelta(minutes=self.buffer)
+
+                date_and_values = [(t,d) for t,d in condition.times_and_data() if t >= check_time]
 
                 to_send = condition.check(date_and_values)
 
@@ -79,14 +82,20 @@ class Alert(Document):
                     detached_condition = copy(condition)
 
                     # Set some helper vars
-                    detached_condition["station"] = db.Station.find_one({ '_id' : condition._id })
+                    stat = condition.station()
                     del detached_condition["station_id"]
                     del detached_condition["_id"]
 
-                    data_to_send.append({
-                        'condition' : detached_condition,
-                        'data'      : to_send 
-                    })
+                    detached_condition["values"] = to_send
+
+                    if not data_to_send.has_key(unicode(stat._id)):
+                        data_to_send[unicode(stat._id)] = { 
+                            'name'          : stat.provider + "-" + stat.description,
+                            'link'          : stat.link,
+                            'conditions'    : []
+                        }
+
+                    data_to_send[unicode(stat._id)]['conditions'].append(detached_condition)
 
         self.checked = datetime.utcnow()
         self.save()

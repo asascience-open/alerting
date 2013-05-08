@@ -62,7 +62,9 @@
                               .append("<br />")
                               .append($("<span />").attr('class','last_text').html("Last notification sent: " + alert.sent))
                               .append("<br />")
-                              .append($("<span />").attr('class','last_text').html("Notification of new alerts sent every: " + alert.frequency));
+                              .append($("<span />").attr('class','last_text').html("Notifications are sent every " + alert.frequency))
+                              .append("<br />")
+                              .append($("<span />").attr('class','last_text').html("Conditions must occur within " + alert.buffer + " of each other"));
         }
 
         function buildAlertContents(alert) {
@@ -777,16 +779,27 @@
             <form id="alert_form">
                 <label for="name">Name</label>
                 <input type="textfield" id="name" name="name" />
-                <label for="frequency">Notify me of new alerts every</label>
+                <label for="frequency">Notify me every</label>
                 <select type="select" id="frequency" name="frequency">
                     <option value="10">10 minutes</option>
                     <option value="20">20 minutes</option>
+                    <option value="40">40 minutes</option>
+                    <option value="60" selected="selected">1 hour</option>
+                    <option value="360">6 hours</option>
+                    <option value="720">12 hours</option>
+                    <option value="1440">1 day</option>
+                </select>
+                <label for="buffer">if conditions occur within</label>
+                <select type="select" id="buffer" name="buffer">
+                    <option value="10">10 minutes</option>
+                    <option value="20" selected="selected">20 minutes</option>
                     <option value="40">40 minutes</option>
                     <option value="60">1 hour</option>
                     <option value="360">6 hours</option>
                     <option value="720">12 hours</option>
                     <option value="1440">1 day</option>
                 </select>
+                of each other.
             </form>            
             <button name="alert_create_button" id="alert_create_button">Create Alert</button>
         </div>

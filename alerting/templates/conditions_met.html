@@ -1,0 +1,18 @@
+<p>Dear {{ alert.email }},</p>
+
+<p>All of the conditions for your alert "{{ alert.name }}" are being met.</p>
+
+{%- for key,station in data.iteritems() %}
+    <h1>{{ station.name }} ({{ station.link }})</h1>
+    {%- for condition in station.conditions %}
+        <h2>{{ condition.label() }}</h2>
+        <ul>
+        {%- for t,d in condition["values"] %}
+            <li>{{ t | datetimeformat }} - {{ d }} {{condition.units}}</li>
+        {%- endfor %}
+        <ul>
+    {%- endfor %}
+{%- endfor %}
+
+<p>Regards,</p>
+<p>GLOS</p>

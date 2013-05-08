@@ -44,4 +44,7 @@ class Condition(Document):
         triggering = filter(lambda (t,d): cmp(d, self.value) == comparator_value, date_value_tuples)
         return triggering
 
+    def label(self):
+        return "%s (%s) %s %d" % (self.variable, self.units, self.comparator, self.value)
+
 db.register([Condition])
