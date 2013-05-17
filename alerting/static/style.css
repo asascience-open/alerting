@@ -254,9 +254,13 @@ form {
     text-decoration: none;
 }
 
+.legend div img {
+    vertical-align: middle;
+}
+
 #map_wrapper {
     width: 448px;
-    height: 500px;
+    height: 550px;
     float: right;
     }
 

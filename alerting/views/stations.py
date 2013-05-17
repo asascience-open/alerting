@@ -24,11 +24,12 @@ def stations():
     return_stations = []
 
     for s in stations:
-    	s['variables'] = s.variables()
         s['coordinates'] = s.coordinates()
+        s['most_recent_obs'] = s.most_recent_obs()
         del s['updated']
         del s['created']
         del s['geometry']
+        del s['last_obs']
         del s['timeseries']
         del s['type']
         

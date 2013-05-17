@@ -25,7 +25,6 @@ def reindex_stations():
             station.longitude = float(properties.get("lon"))
             station.geometry = unicode(Point(station.longitude, station.latitude).wkt)
             station.timeseries = properties.get("timeSeries")
-            station.last_obs = properties.get("topObs")
             station.link = properties.get("url")
             station.type = properties.get("siteType")
             station.updated = datetime.utcnow()

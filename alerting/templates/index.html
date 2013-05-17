@@ -356,13 +356,13 @@
                 var_select = target.parent().parent().find("select[name=variable]");
                 var_select.empty();
 
-                if (station.variables.length < 1) {
+                if (station.most_recent_obs.length < 1) {
                     variable.append($("<option />")
                                         .attr("value", "")
                                         .html("Station not reporting, please check back at a later time to add more alerts"));
                     target.parent().parent().find("button[name=add]").attr("disabled", "disabled");
                 } else {
-                    $.each(station.variables, function(k,v) {
+                    $.each(station.most_recent_obs, function(k,v) {
                         var_select.append($("<option />")
                                             .attr("value", k)
                                             .html(k));
@@ -371,8 +371,8 @@
                                                 t = $(e.currentTarget);
                                                 units_select = t.parent().parent().find("select[name=units]");
                                                 units_select.empty();
-                                                if (station.variables.hasOwnProperty(t.val())) {
-                                                    $.each(station.variables[t.val()], function(i, u) {
+                                                if (station.most_recent_obs.hasOwnProperty(t.val())) {
+                                                    $.each(station.most_recent_obs[t.val()].values, function(u, value) {
                                                         units_select.append($("<option />")
                                                             .attr("value", u)
                                                             .html(u));
@@ -473,30 +473,35 @@
 
         function popup(f,showSensors) {
           var station = findStationById(f.cluster ? f.cluster[0].attributes._id : f.attributes._id);
+          var atts = f.cluster ? f.cluster[0].attributes : f.attributes;
           var rows = [];
           var lines = 0; // keep track of how many data lines there are in order to set the height of the popup
           var timeFound;
           // SHOES
           // f.attributes.conditions is where it's at.
           if (showSensors) {
-            for (var obsName in station.last_obs) {
+            for (var obsName in station.most_recent_obs) {
               if (!timeFound) {
                 timeFound = true;
-                rows.unshift('<td colspan=2>' + new Date(station.last_obs[obsName].t * 1000).format("mmm d h:MM TT Z") + '</td>');
+                rows.unshift('<td colspan=2>' + (new Date(Date.parse(station.most_recent_obs[obsName].time))).format("mmm d h:MM TT Z") + '</td>');
                 lines++;
               }
               var obsVals = [];
-              for (var obsUnit in station.last_obs[obsName].v) {
-                obsVals.push(String(station.last_obs[obsName].v[obsUnit] + ' ' + obsUnit).replace(/ /g,'&nbsp;'));
+              for (var obsUnit in station.most_recent_obs[obsName].values) {
+                obsVals.push(String(station.most_recent_obs[obsName].values[obsUnit] + ' ' + obsUnit).replace(/ /g,'&nbsp;'));
               }
               if (obsVals.length == 0) {
                 obsVals = ['---'];
               }
               var alertImg = '{{ url_for('.static', filename='images/blank.png') }}';
+
               // SHOES this is where you would test for the alert activity
-              if (rows.length % 2 == 0) {
-                alertImg = '{{ url_for('.static', filename='images/alert16.png') }}';
+              for (var i = 0 ; i < atts.conditions.length ; i++) {
+                if (atts.conditions[i].variable == obsName && atts.conditions[i].triggering) {
+                    alertImg = '{{ url_for('.static', filename='images/alert16.png') }}';
+                }
               }
+
               rows.push(
                 '<td align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>' 
                 + '<td align=right>' + obsVals.join('<br>') + '</td>'
@@ -640,20 +645,24 @@
             features[i].attributes.numAlertsWatched   = 0;
             features[i].attributes.numAlertsTriggered = 0;
             features[i].attributes.force              = 0;
+            features[i].attributes.conditions         = [];
             if (alert != null) {
-                features[i].attributes.conditions     = alert.conditions;
                 for (var k = 0 ; k < alert.conditions.length ; k++) {
+                    // Does the Condition belogs to this station
                     if (features[i].attributes._id == alert.conditions[k].station_id) {
                         features[i].attributes.numAlertsWatched++;
-                        // SHOES need to do the real testing here
-                        features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
-                    bbox.extend(features[i].geometry.getBounds());
+                        if (alert.conditions[k].triggering) {
+                            features[i].attributes.numAlertsTriggered++;
+                            features[i].attributes.conditions.push(alert.conditions[k]);
+                        }
+                        bbox.extend(features[i].geometry.getBounds());
                     }
                 }
             }
           }
           lyr.addFeatures(features);
           lyr.redraw();
+
           // zoom to the alert if we have a decent bbox
           if (zoomTo && typeof(bbox.bottom) == 'number') {
             var size = bbox.getSize();
@@ -704,14 +713,14 @@
                                   if (feature.attributes.count == 1) {
                                       if (feature.cluster[0].attributes.numAlertsTriggered > 0) {
                                           if (feature.cluster[0].attributes.numAlertsTriggered - feature.cluster[0].attributes.numAlertsWatched == 0) {
-                                              return '{{ url_for('.static', filename='images/traffic-red32.png') }}';
+                                              return '{{ url_for('.static', filename='images/redtri.png') }}';
                                           }
                                           else {
-                                              return '{{ url_for('.static', filename='images/traffic-yellow32.png') }}';
+                                              return '{{ url_for('.static', filename='images/bluetri.png') }}';
                                           }
                                       }
                                       else if (feature.cluster[0].attributes.numAlertsWatched > 0) {
-                                          return '{{ url_for('.static', filename='images/traffic-green32.png') }}';
+                                          return '{{ url_for('.static', filename='images/greytri.png') }}';
                                       }
                                       else {
                                           return '{{ url_for('.static', filename='images/site20.png') }}';
@@ -724,10 +733,10 @@
                               ,getGraphicWidthHeight : function(feature) {
                                   if (feature.attributes.count == 1) {
                                       if (feature.cluster[0].attributes.numAlertsTriggered > 0) {
-                                          return 32; 
+                                          return 24; 
                                       }
                                       else if (feature.cluster[0].attributes.numAlertsWatched > 0) {
-                                          return 32;
+                                          return 24;
                                       }
                                       else {
                                           return 20;
@@ -738,10 +747,10 @@
                               ,getPointRadius : function(feature) {
                                   if (feature.attributes.count == 1) {
                                       if (feature.cluster[0].attributes.numAlertsTriggered > 0) {
-                                          return 32 / 2;
+                                          return 24 / 2;
                                       }
                                       else if (feature.cluster[0].attributes.numAlertsWatched > 0) {
-                                          return 32 / 2;
+                                          return 24 / 2;
                                       }
                                       else {
                                           return 20 / 2;
@@ -920,6 +929,11 @@
             <div id='map_wrapper'>
                 <div id="searchDiv">Search for a station: <input id="search"></div>
                 <div id="map"></div>
+                <div class="legend">
+                    <div><img src="{{ url_for('.static', filename='images/redtri.png') }}" /><span>- All conditions at this station are triggered</span></div>
+                    <div><img src="{{ url_for('.static', filename='images/bluetri.png') }}" /><span> - Some conditions at this station are triggered</span></div>
+                    <div><img src="{{ url_for('.static', filename='images/greytri.png') }}" /><span> - No conditions at this station are triggered</span></div>
+                </div>
             </div>
             <div class="clear"></div>
         </div>
