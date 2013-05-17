@@ -13,6 +13,25 @@
         var features = [];
         var selectCtl;
 
+        var opts = {
+            lines: 11, // The number of lines to draw
+            length: 6, // The length of each line
+            width: 2, // The line thickness
+            radius: 2, // The radius of the inner circle
+            corners: 1, // Corner roundness (0..1)
+            rotate: 1, // The rotation offset
+            direction: 1, // 1: clockwise, -1: counterclockwise
+            color: '#000', // #rgb or #rrggbb
+            speed: 1, // Rounds per second
+            trail: 60, // Afterglow percentage
+            shadow: false, // Whether to render a shadow
+            hwaccel: false, // Whether to use hardware acceleration
+            className: 'spinner', // The CSS class to assign to the spinner
+            zIndex: 2e9, // The z-index (defaults to 2000000000)
+            top: 'auto', // Top position relative to parent in px
+            left: 'auto' // Left position relative to parent in px
+        };
+
         function removeFromSavedAlerts(alert) {
             var remove_index = -1;
             for (var i = 0 ; i < saved_alerts.length ; i++) {
@@ -24,6 +43,98 @@
             if (remove_index != -1) {
                 saved_alerts.splice(remove_index,1);
             }
+        }
+
+        function showSavedMessage(alert) {
+            var status = $("span#" + alert._id + "_spinner");
+            status.text("Saved").fadeOut(1000, function() {
+                status.text("");
+                status.show();
+            });
+        }
+
+        function updateAlert(alert, new_data) {
+            // Start spinner
+
+            var status = $("span#" + alert._id + "_spinner");
+            status.spin(opts);
+
+            $.ajax({
+                type     : 'POST'
+                ,url     : alert.edit_url
+                ,data    : new_data
+                ,async   : false
+            });
+
+            // End Spinner and say "saved"
+            status.spin(false);
+            showSavedMessage(alert);
+        }
+
+        function buildAlert(alert) {
+
+            $("<h3 />").attr("id",alert._id + "_h3")
+                .append($(buildAlertHeader(alert)))
+                .appendTo("#alerts");
+
+            var d = $("<div />");
+
+            d.append($(buildAlertContents(alert)));
+            d.append(buildAddCondition(alert));
+            d.append($("<h4 />").attr("name","settings").html("Alert Settings"))
+            d.append($(buildAlertEdits(alert)));
+            d.appendTo("#alerts");
+
+
+
+            // Frequency
+            var freq_select = $("select[name='" + alert._id + "_frequency']");
+            // Select the current frequency
+            freq_select.find("option").filter(function() {
+                return this.text == alert.frequency;
+            }).attr("selected", "selected");
+            // Save frequency
+            $("select[name='" + alert._id + "_frequency']").change(function() {
+                updateAlert(alert, { frequency: parseInt($(this).val()) })
+            })
+
+            // Buffer
+            var burf_select = $("select[name='" + alert._id + "_buffer']");
+            // Select the current buffer
+            burf_select.find("option").filter(function() {
+                return this.text == alert.buffer;
+            }).attr("selected", "selected");
+            // Save buffer
+            $("select[name='" + alert._id + "_buffer']").change(function() {
+                updateAlert(alert, { buffer: parseInt($(this).val()) })
+            })
+
+            // Make Name editable
+            $("#" + alert._id + "_h3 .alert_title").editable(function(value,settings) {
+                updateAlert(alert, { name: value });
+                return value;
+            }, {
+                onblur      : 'submit',
+                width       : 400
+            });
+
+        }
+
+        function buildAlertEdits(alert) {
+
+            var root = $("<div />");
+
+            var freq = $("<div />").append($("<span />").html("Notify me every "));
+            freq.append($("<span />")
+                .html('<select type="select" name="' + alert._id + '_frequency"><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="40">40 minutes</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">1 day</option></select>'));
+
+            var buf = $("<div />").append($("<span />").html("All Conditions must be met within "));
+            buf.append($("<span />")
+                .html('<select type="select" name="' + alert._id + '_buffer"><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="40">40 minutes</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">1 day</option></select>'))
+                .append($("<span />").html(" of each other"));
+
+            return root.append(freq).append(buf);
+
         }
 
         function buildAlertHeader(alert) {
@@ -54,25 +165,24 @@
                                         });
                                     return false;
                                 });
+             var status = $("<span />")
+                            .attr("class","alert_spinner")
+                            .attr("id", alert._id + "_spinner");
 
-            return $("<h3 />").append($("<span />").html(alert.name))
+            return $("<div />")
+                              .append($("<span />").attr("class","alert_title").html(alert.name))
                               .append(del_link)
+                              .append(status)
                               .append("<br />")
                               .append($("<span />").attr('class','last_text').html("Last checked: " + alert.checked))
                               .append("<br />")
                               .append($("<span />").attr('class','last_text').html("Last notification sent: " + alert.sent))
-                              .append("<br />")
-                              .append($("<span />").attr('class','last_text').html("Notifications are sent every " + alert.frequency))
-                              .append("<br />")
-                              .append($("<span />").attr('class','last_text').html("Conditions must occur within " + alert.buffer + " of each other"));
         }
 
         function buildAlertContents(alert) {
 
-            var content = $("<div />");  
-
             // Add conditions
-            var ul = $("<ul />")
+            var ul = $("<ul />").attr("class","conditions_list");
             // this matches conditions with the correct station and lists them
             // under the station headings.  this is ugly.
             var last_station_id = null;
@@ -93,19 +203,20 @@
             }
             ul.append(last_station_dom);
 
-            // Add the "Add new condition" form
-            ul.append(buildAddCondition(alert));
-
-            content.append(ul);
-
             classifyList(ul);
 
-            return content;
+            return ul;
         }
 
         function buildStationHeading(station_id) {
             station = findStationById(station_id);
             var d = $('<li />').attr('id', station_id);             
+
+
+            var station_name = (station.provider + " - " + station.description)
+            if (station_name.length > 50) {
+                station_name = station_name.slice(0,50) + "..."; 
+            }
 
             // If there is a station link, create the link
             if (station.link != "") {
@@ -113,9 +224,9 @@
                 // Zoom to the station on the map.  The stations popup has a link to the
                 // external station page.
                 .attr("href","javascript:zoomToStationById('" + station_id + "')")
-                .html(station.provider + " - " + station.description))
+                .html(station_name))
             } else {
-                d.append($("<span />").html(station.provider + " - " + station.description));
+                d.append($("<span />").html(station_name));
             }
 
             return d
@@ -123,28 +234,14 @@
 
         function buildCondition(alert, cond) {
 
-            data = cond['timeseries'];
+            data = cond['values'];
+            times = cond['times'];
 
             var root = $('<div />').attr("class", "condition");
 
             root.append($("<span />").html(cond.variable + " (" + cond.units + ") " + cond.comparator + " " + cond.value));
             
-            var linechart = $("<span />");
-            if (data.length > 0) {
-                linechart.sparkline(data, {
-                    type: 'line',
-                    width: '150',
-                    height: '20',
-                    lineColor: '#0000f0',
-                    fillColor: '#c0d0f0',
-                    spotRadius: 0,
-                    lineWidth: 1,
-                });
-            }
-            linechart.css("width", "150px").html(" - No recent data - ")
-
-            root.append(linechart);
-
+            // Delete button
             root.append($("<a />")
                             .attr("class","condition_delete")
                             .attr("href", cond.destroy_url)
@@ -161,7 +258,7 @@
                                         if (station_div.find("div").length == 0) {
                                             station_div.remove();
                                         }
-                                        // Add condition to saved_alerts
+                                        // Remove condition from saved_alerts
                                         var remove_index = -1;
                                         var active_index = getActiveAlertIndex();
                                         for (var i = 0 ; i < saved_alerts[active_index].conditions.length ; i++) {
@@ -177,9 +274,37 @@
                                         $( "#alerts" ).accordion( "refresh" );
                                         classifyList(list_div);
                                         syncMapWithAlert(alert);
+                                        showSavedMessage(alert);
                                     }
                                 )})
                         );
+
+            var holder = $("<span />").css("float","right");
+            
+            if (data.length > 1) {
+                var linechart = $("<span />").attr("class", "linechart");
+                first = new Date(Date.parse(times[0]));
+                last = new Date(Date.parse(times[times.length - 1]))
+                holder.append($("<span />").attr("class","tinydate").html(first.format("m/d") + " " + first.format("h:MM")));
+
+                linechart.sparkline(data, {
+                    type: 'line',
+                    width: '100',
+                    height: '15',
+                    lineColor: '#0078ae',
+                    fillColor: '#acdd4a',
+                    spotRadius: 0,
+                    lineWidth: 1
+                });
+                holder.append(linechart);
+                holder.append($("<span />").attr("class","tinydate").html(last.format("m/d") + " " + last.format("h:MM")));
+            } else if (data.length == 1) {
+                holder.html(data[0] + " on " + (new Date(Date.parse(times[0])).format("mmm d h:MM TT Z")));
+            } else {
+                holder.html(" - No recent data - ");
+            }
+
+            root.append(holder);
 
             return root;
         }
@@ -222,7 +347,8 @@
         function buildAddCondition(alert) {
 
             // Create form
-            var root = $("<form />").attr("class","add_condition").attr("name", alert._id).append($("<span />").html("Add condition: ")).append("<br />");
+            var root = $("<form />").attr("class","add_condition").attr("name", alert._id);
+            root.prepend($("<h4 />").html("Set a new Condition"));
 
             // Add station select
             root.append(buildStationSelect(function(clicker) {
@@ -300,21 +426,26 @@
                                         if (condition["error"]) {
                                             $("#messages").html("<div class='flash'>" + condition["error"] + "</div>");
                                         } else {
-                                            var station_dom = $("form[name=" + link.attr("id") + "]").parent().find("#" + condition.station_id);
-                                            if (station_dom.length == 0) {
-                                                station_dom = buildStationHeading(condition.station_id);
-                                                $("form[name=" + link.attr("id") + "]").before(station_dom);
-                                            }
-                                            station_dom.append(buildCondition(alert, condition));
+
+                                            var ul_list = $("form[name=" + link.attr("id") + "]").parent().find("ul")
 
                                             // Add condition to saved_alerts
                                             getActiveAlert().conditions.push(condition);
+
+                                            var station_dom = ul_list.find("li#" + condition.station_id);
+                                            if (station_dom.length == 0) {
+                                                station_dom = buildStationHeading(condition.station_id);
+                                                ul_list.append(station_dom);
+                                                //$("form[name=" + link.attr("id") + "]").before(station_dom);
+                                            }
+                                            station_dom.append(buildCondition(alert, condition));
 
                                             classifyList(station_dom.closest("ul"));
 
                                             $.sparkline_display_visible();
                                             $( "#alerts" ).accordion( "refresh" );
                                             syncMapWithAlert(alert,true);
+                                            showSavedMessage(alert);
                                         }
 
                                     }
@@ -335,10 +466,10 @@
                $("#messages").html("<div class='flash'>" + alert["error"] + "</div>");
             } else {
                 saved_alerts.push(alert);
-                $(buildAlertHeader(alert)).appendTo("#alerts");
-                $(buildAlertContents(alert)).appendTo("#alerts");
+                buildAlert(alert);
                 $( "#alerts" ).accordion( "refresh" );
                 $( "#alerts" ).accordion({ active: -1 });
+                showSavedMessage(alert);
             }
         }
 
@@ -518,7 +649,7 @@
                         features[i].attributes.numAlertsWatched++;
                         // SHOES need to do the real testing here
                         features[i].attributes.numAlertsTriggered += (k == 1 || k % 2 == 0) ? 1 : 0;
-                	bbox.extend(features[i].geometry.getBounds());
+                    bbox.extend(features[i].geometry.getBounds());
                     }
                 }
             }
@@ -748,8 +879,7 @@
                         alerts = alerts["alerts"];
                         for (var i = 0 ; i < alerts.length ; i++) {
                             saved_alerts.push(alerts[i]);
-                            $(buildAlertHeader(alerts[i])).appendTo("#alerts");
-                            $(buildAlertContents(alerts[i])).appendTo("#alerts");
+                            buildAlert(alerts[i]);
                         }
                         $( "#alerts" ).accordion( "refresh" );
                         $( "#alerts" ).accordion( "option", "active", 0 );
@@ -776,32 +906,7 @@
     {%- if user.is_active() -%}
 
         <div id='left_notes'>
-            <form id="alert_form">
-                <label for="name">Name</label>
-                <input type="textfield" id="name" name="name" />
-                <label for="frequency">Notify me every</label>
-                <select type="select" id="frequency" name="frequency">
-                    <option value="10">10 minutes</option>
-                    <option value="20">20 minutes</option>
-                    <option value="40">40 minutes</option>
-                    <option value="60" selected="selected">1 hour</option>
-                    <option value="360">6 hours</option>
-                    <option value="720">12 hours</option>
-                    <option value="1440">1 day</option>
-                </select>
-                <label for="buffer">if conditions occur within</label>
-                <select type="select" id="buffer" name="buffer">
-                    <option value="10">10 minutes</option>
-                    <option value="20" selected="selected">20 minutes</option>
-                    <option value="40">40 minutes</option>
-                    <option value="60">1 hour</option>
-                    <option value="360">6 hours</option>
-                    <option value="720">12 hours</option>
-                    <option value="1440">1 day</option>
-                </select>
-                of each other.
-            </form>            
-            <button name="alert_create_button" id="alert_create_button">Create Alert</button>
+            <span><button id="alert_create_button">Click here</button> to get started by creating an alert</span>
         </div>
         <div id='right_notes'>
             <div>Signed in as {{ user.email }}</div>

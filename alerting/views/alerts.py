@@ -24,11 +24,13 @@ def alerts():
         a['checked'] = a.user_friendly_checked()
         a['sent'] = a.user_friendly_sent()
         a['destroy_url'] = url_for('destroy_alert', alert_id=a['_id'])
+        a['edit_url'] = url_for('edit_alert', alert_id=a['_id'])
         a['new_condition_url'] = url_for('new_condition', alert_id=a['_id'])
 
         for c in a.conditions:
             c['destroy_url'] = url_for('destroy_condition', alert_id=a['_id'], condition_id=c['_id'])
-            c['timeseries'] = c.data()
+            c['values'] = c.data()
+            c['times'] = c.times()
             c['station_id'] = c.station()['_id']
 
         a.conditions = sorted(a.conditions, key=lambda x: x['station_id'])
@@ -56,6 +58,7 @@ def new_alert():
     alert['buffer'] = alert.user_friendly_buffer()
     alert['sent'] = alert.user_friendly_sent()
     alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
+    alert['edit_url'] = url_for('edit_alert', alert_id=alert['_id'])
     alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
 
     # Schedule job to check and send emails if needed
@@ -69,6 +72,29 @@ def new_alert():
     )
 
     return jsonify(alert)
+
+@app.route('/alerts/<ObjectId:alert_id>/edit', methods=['POST'])
+def edit_alert(alert_id):
+    alert = db.Alert.find_one({ '_id' : alert_id, 'email' : current_user.email })
+    if alert is not None:
+        editable = ["name","frequency","buffer","active"]
+        for k,v in request.form.iteritems():
+            if k in editable:
+                alert[k] = type(db.Alert.get(k))(v)
+
+        alert.save()
+
+        alert['frequency'] = alert.user_friendly_frequency()
+        alert['checked'] = alert.user_friendly_checked()
+        alert['buffer'] = alert.user_friendly_buffer()
+        alert['sent'] = alert.user_friendly_sent()
+        alert['destroy_url'] = url_for('destroy_alert', alert_id=alert['_id'])
+        alert['edit_url'] = url_for('edit_alert', alert_id=alert['_id'])
+        alert['new_condition_url'] = url_for('new_condition', alert_id=alert['_id'])
+        return jsonify(alert)
+
+    else:
+        return jsonify({"message" : "error"})
 
 @app.route('/alerts/<ObjectId:alert_id>/destroy', methods=['POST'])
 def destroy_alert(alert_id):
@@ -109,7 +135,8 @@ def new_condition(alert_id):
         alert.save()
 
         c['destroy_url'] = url_for('destroy_condition', alert_id=alert['_id'], condition_id=c['_id'])
-        c['timeseries'] = c.data()
+        c['values'] = c.data()
+        c['times'] = c.times()
         c['station_id'] = c.station()['_id']
 
         del c['updated']
