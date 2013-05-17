@@ -80,12 +80,11 @@
             var d = $("<div />");
 
             d.append($(buildAlertContents(alert)));
+            d.append($("<h5 />").html("Set a new Condition"));
             d.append(buildAddCondition(alert));
-            d.append($("<h4 />").attr("name","settings").html("Alert Settings"))
+            d.append($("<h5 />").attr("name","settings").html("Alert Settings"))
             d.append($(buildAlertEdits(alert)));
             d.appendTo("#alerts");
-
-
 
             // Frequency
             var freq_select = $("select[name='" + alert._id + "_frequency']");
@@ -348,7 +347,6 @@
 
             // Create form
             var root = $("<form />").attr("class","add_condition").attr("name", alert._id);
-            root.prepend($("<h4 />").html("Set a new Condition"));
 
             // Add station select
             root.append(buildStationSelect(function(clicker) {
