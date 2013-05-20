@@ -29,7 +29,6 @@ def stations():
         del s['updated']
         del s['created']
         del s['geometry']
-        del s['last_obs']
         del s['timeseries']
         del s['type']
         
