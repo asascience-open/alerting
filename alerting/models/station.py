@@ -61,23 +61,29 @@ class Station(Document):
         return variables
 
     def data(self, variable=None, units=None):
-        if self.timeseries and variable is not None and variable not in Station.ignore_variables and units is not None and self.timeseries[variable][u'v'][units] is not None:
+        try:
             return [float(x) for x in self.timeseries[variable][u'v'][units] if x not in Station.data_fill_values]
-        else:
+        except:
             return []
 
     def times(self, variable=None):
-        if self.timeseries and variable is not None and variable not in Station.ignore_variables and self.timeseries[variable][u't'] not in Station.time_fill_values:
-            return [datetime.fromtimestamp(x) for x in self.timeseries[variable][u't'] if x not in Station.time_fill_values]
-        else:
-            return []
+        d = []
+        try:
+            if variable not in Station.ignore_variables:
+                d = [datetime.fromtimestamp(x) for x in self.timeseries[variable][u't'] if x not in Station.time_fill_values]
+        except:
+            pass
+        return d
 
     def times_and_data(self, variable=None, units=None):
-        if self.timeseries and variable is not None and variable not in Station.ignore_variables and units is not None and self.timeseries[variable][u't'] not in Station.time_fill_values:
-            return [(datetime.fromtimestamp(t), float(d)) for t,d in zip(self.timeseries[variable][u't'], self.timeseries[variable][u'v'][units]) if d not in Station.data_fill_values and t not in Station.time_fill_values]
-        else:
-            return []
-
+        d = []
+        try:
+            if variable not in Station.ignore_variables:
+                d = [(datetime.fromtimestamp(t), float(d)) for t,d in zip(self.timeseries[variable][u't'], self.timeseries[variable][u'v'][units]) if d not in Station.data_fill_values and t not in Station.time_fill_values]
+        except:
+            pass
+        return d
+        
     def coordinates(self):
         try:
             geo = loads(self.geometry)
