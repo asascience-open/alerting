@@ -9,7 +9,7 @@ from alerting import app, db
 
 def reindex_stations():
     with app.app_context():
-        url = "http://data.glos.us/portal/getObs.php"
+        url = "http://data.glos.us/portal/cachedObs.json"
         j = json.loads(urllib2.urlopen(url).read())
         for s in j:
             properties = s.get('properties')
