@@ -32,7 +32,10 @@ def alerts():
             c['values'] = c.data()
             c['times'] = c.times()
             c['station_id'] = c.station()['_id']
-            c['triggering'] = len(c.check([c.times_and_data()[-1]])) > 0
+            try:
+                c['triggering'] = len(c.check([c.times_and_data()[-1]])) > 0
+            except IndexError:
+                c['triggering'] = 0
 
         a.conditions = sorted(a.conditions, key=lambda x: x['station_id'])
 
