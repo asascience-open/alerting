@@ -13,6 +13,10 @@ h2 {
     color: #0B5499;
 }
 
+h3 {
+    text-align: center;
+}
+
 h4 {
     padding: 0;
     margin: 0;
@@ -85,13 +89,57 @@ form {
     margin: 0 auto;
 }
 
+
+    #welcome #local_logins {
+        width: 330px;
+        margin: 0 20px 0 0;
+        float: left;
+    }
+
+    #welcome #local_logins form {
+        line-height: 20px;
+    }
+
+    #welcome #local_logins form ul {
+        margin-left: 20px;
+    }
+
+        #welcome #local_logins form label {
+            font-weight: bold;
+        }
+
+        #welcome #local_logins form input[type=text] {
+            width: 135px;
+            float: right;
+        }
+
+        #welcome #local_logins form ul input[type=password] {
+            width: 135px;
+            float: right;
+        }
+
+        #welcome #local_logins form ul a {
+            float: left;
+            line-height: 30px;
+            margin-left: 30px;
+            margin-top: 10px;
+        }
+
+        #welcome #local_logins form ul input[type=submit] {
+            border: 1px solid #888;
+            color: #444;
+            cursor: pointer;
+            float: right;
+            margin-top: 10px;
+        }
+
     #welcome #social_logins {
-        margin: 40px auto 0 auto;
-        text-align: center;
+        width: 320px;
+        margin: 0 0 0 30px;
+        float: left;
     }
 
     #welcome #social_logins a {
-        margin: 10px;
         text-decoration: none;
     }
 
@@ -100,39 +148,8 @@ form {
         border: none;
     }
 
-    #welcome #logins {
+    #welcome #social_logins #login_buttons {
         text-align: center;
-        width: 100%;
-        margin: 70px auto;
-    }
-
-    #welcome #logins div {
-        float: left;
-        width: 50%;
-    }
-
-    #welcome #logins label {
-        clear: both;
-        width: 30%;
-        float: left;
-    }
-
-    #welcome #logins input {
-        border: 1px solid #aaa;
-        padding: 2px;
-    }
-
-    #welcome #logins #local input[type=text] {
-        float: left;
-        width: 50%;
-    }
-
-    #welcome #logins #local input[type=password] {
-        float: left;
-        width: 50%;
-    }
-    #welcome #logins #local input[type=submit] {
-        float: right;
     }
 
 

@@ -186,7 +186,6 @@ def login_local():
                 flash("Please enter a password")
             else:
                 pass_check = user.check_password(password)
-                app.logger.info(user.password)
                 if pass_check:
                     login_user(user)
                     flash("Signed in as '%s'." % email)

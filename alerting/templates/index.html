@@ -974,34 +974,42 @@
                 ones.
             </p>
 
-            <h2>Sign in</h2>
+            <hr />
+            <br />
 
             <div id="local_logins">
-                <h4>Sign in with your GLOS Alerts account</h4>
+                <h3>Sign in with your GLOS Alerts account</h3>
                 <p>Signing in with a GLOS Alerts account is not required, but will allow you greater flexibility and provide access to additional GLOS tools and features.</p>
                 <form name="register" method="POST" action="{{ url_for('login_local') }}">
                     <label for="email">What is your email address?</label>
                     <input type="text" name="email" />
                     <br />
-                    <label for="iamanewuser">Do you have a GLOS Alerts password?</label>
-                    <br />
-                    <input type="radio" name="iamanewuser" value="true" checked="checked" />No, I am a new user.<br />
-                    <input type="radio" name="iamanewuser" value="false"/>Yes, I have a password:
-                    <input type="password" name="password" id="password" /><a href="{{ url_for('forgot_password') }}" class="forgot_password">Forgot your password?</a><br />
-                    <input type="submit" name="submit" value="Sign in" />
+                    <label for="iamanewuser">Do you have a password?</label>
+                    <ul>
+                        <li><input type="radio" name="iamanewuser" value="true" checked="checked" />No, I am a new user.<br />
+                        <li>
+                            <input type="radio" name="iamanewuser" value="false"/>Yes, I have a password:
+                            <input type="password" name="password" id="password" />
+                        </li>
+                        <li>
+                            <a href="{{ url_for('forgot_password') }}" class="forgot_password">Forgot your password?</a>
+                            <input type="submit" name="submit" value="Sign in" />
+                        </li>
+                    </ul>
                 </form>
             </div>
 
             <div id="social_logins">
-                <h4>Prefer to use your Facebook or Google+ login?</h4>
-                <a href="{{ url_for('login_google') }}">
-                    <img src="{{ url_for('.static', filename='images/google.png') }}" />
-                </a>
-                <a href="{{ url_for('login_facebook') }}">
-                    <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
-                </a>
-                <h4>We only use the above services to verify your email address.</h4>
-                <h4>No additional information is ever collected or shared.</h4>
+                <h3>Sign in with Facebook or Google+</h3>
+                <p>We only use the below services to verify your email address. No additional information is ever collected or shared.</p>
+                <div id="login_buttons">
+                    <a href="{{ url_for('login_google') }}">
+                        <img src="{{ url_for('.static', filename='images/google.png') }}" />
+                    </a>
+                    <a href="{{ url_for('login_facebook') }}">
+                        <img src="{{ url_for('.static', filename='images/facebook.png') }}" />
+                    </a>
+                </div>
                 <div class="clear"></div>
             </div>
 
