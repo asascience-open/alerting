@@ -48,13 +48,10 @@ def facebook_authorized(resp):
         if not user.confirmed:
             user.confirmed = True
             user.save()
-    
+
     login_user(user)
 
-    if user.password is None:
-        next_url = url_for('set_password')
-    else:
-        next_url = request.args.get('next') or url_for('index')
+    next_url = request.args.get('next') or url_for('index')
     return redirect(next_url)
 
 @facebook.tokengetter
@@ -95,10 +92,7 @@ def google_authorized(resp):
 
         login_user(user)
 
-        if user.password is None:
-            next_url = url_for('set_password')
-        else:
-            next_url = request.referrer or url_for('index')
+        next_url = request.referrer or url_for('index')
         return redirect(next_url)
 
     except URLError, e:
@@ -114,6 +108,21 @@ def set_password():
         return render_template('set_password.html')
     else:
         return redirect(url_for('index'))
+
+@app.route("/forgot_password", methods=['GET','POST'])
+def forgot_password():
+    if request.method == 'GET':
+        return render_template('forgot_password.html')
+    else:
+        email = request.form.get("email", None)
+        user = db.User.find_one( { 'email' : email } )
+        if user is not None:
+            send_confirmation(user)
+            flash("Email address '%s' must be confirmed before changing your password.  Check your email for instructions." % email)
+            return redirect(url_for('index'))
+        else:
+            flash("Email address '%s' does not exists in system.  Please create an account." % email)
+            return redirect(url_for('forgot_password'))
 
 @app.route("/save_password", methods=["POST"])
 def save_password():
@@ -136,55 +145,59 @@ def save_password():
     else:
         return redirect(url_for('index'))
 
-@app.route("/signup", methods=["POST"])
-def signup():
-    email = request.form.get("email")
-    user = db.User.find_one({ 'email' : unicode(email) })
-
-    # User already exists
-    if user is not None and user.confirmed:
-        flash("'%s' already has an account. Try logging in below. " % email )
-        return redirect(url_for('index'))
-    
-    if user is not None and not user.confirmed:
-        send_confirmation(user)
-        flash("Account created.  Please check your email for instructions")
-        return redirect(url_for('index'))
-
-    # Create user
-    user = register_user(email, password=None, confirmed=False)
-    if user is False:
-        flash("Please enter a valid email address")
-        return redirect(url_for('index'))
-    else:
-        send_confirmation(user)
-        flash("Account created.  Please check your email for instructions")
-        return redirect(url_for('index'))
-
 @app.route("/login_local", methods=["POST"])
 def login_local():
-    email = request.form.get("email",'')
+
+    user  = None
+    email = request.form.get("email", None)
+    if email is None:
+        flash("Please enter an email address")
+        return redirect(url_for('index'))
+    else:
+        user = db.User.find_one({ 'email' : unicode(email) })
+
+    # New account
+    newuser  = request.form.get("iamanewuser",)
     password = request.form.get("password",'')
 
-    if email == '' or password == '':
-        flash("Invalid login")
-        return redirect(url_for('index'))
-
-    user = db.User.find_one({ 'email' : unicode(email) })
-
-    if user is not None:
-        # Login
-        pass_check = user.check_password(password)
-        if pass_check:
-            login_user(user)
-            flash("Signed in as '%s'" % email)
-        elif not user.is_active():
-            flash("Email address must be confirmed before logging in.  Check your email for instructions.")
+    if newuser == "true":
+        if user is not None:
+            # User already exists in the system
+            if user.password is not None:
+                # Local account already exists in the system
+                flash("Account for '%s' already exists, please enter your password." % email)
+            else:
+                # Email address exists, but no password is set.  They logged in socially and now want to create a local account.
+                # Confirm email address
+                send_confirmation(user)
+                flash("Account created for '%s'.  Please check your email for instructions on confirming your email address." % email)
         else:
-            flash("Incorrect password for '%s'" % email)
+            # Create account
+            user = register_user(email, password, False)
+            if user is not False:
+                send_confirmation(user)
+                flash("Account created for '%s'.  Please check your email for instructions on confirming your email address." % email)
+            else:
+                flash("Please enter a valid email address and try again.")
     else:
-        flash("No account found for email address '%s'" % email)
+        if user is not None:
+            # User exists, try to log them in using supplied password
+            if password == '':
+                flash("Please enter a password")
+            else:
+                pass_check = user.check_password(password)
+                app.logger.info(user.password)
+                if pass_check:
+                    login_user(user)
+                    flash("Signed in as '%s'." % email)
+                elif not user.is_active():
+                    flash("Email address '%s' must be confirmed before logging in.  Check your email for instructions." % email)
+                else:
+                    flash("Incorrect password for '%s'." % email)
+        else:
+            flash("No account found for email address '%s'." % email)
 
+    # Always redirect to the index page
     return redirect(url_for('index'))
 
 @app.route('/confirm/<ObjectId:user_id>/<string:confirmation_token>', methods=['GET'])
@@ -194,10 +207,10 @@ def confirm_user(user_id, confirmation_token):
         user.confirmed = True
         user.save()
         login_user(user)
-        flash("'%s' has been confirmed" % user.email)
+        flash("'%s' has been confirmed." % user.email)
         return redirect(url_for('set_password'))
     else:
-        flash("There was an error when trying to confirm your account")
+        flash("There was an error when trying to confirm your account.")
         return redirect(url_for('index'))
 
 def send_confirmation(user):
@@ -205,9 +218,9 @@ def send_confirmation(user):
             subject="[GLOS Alerts] Please confirm your email address",
             sender=app.config.get("MAIL_SENDER"),
             recipients=[user.email],
-            text_body=render_template("confirmation_email.txt", 
+            text_body=render_template("confirmation_email.txt",
                 user=user),
-            html_body=render_template("confirmation_email.html", 
+            html_body=render_template("confirmation_email.html",
                 user=user))
 
 def register_user(email, password=None, confirmed=False):

@@ -921,6 +921,10 @@
                     }
                 });
 
+                $("#password").focus(function() {
+                    $("input[name=iamanewuser]").last().trigger("click");
+                })
+
             {%- endif -%}
 
 
@@ -936,7 +940,9 @@
         </div>
         <div id='right_notes'>
             <div>Signed in as {{ user.email }}</div>
-            <a href="{{ url_for('set_password') }}">change /set password</a>
+            {%- if user.password != None %}
+                <a href="{{ url_for('set_password') }}">change / set password</a>
+            {%- endif %}
             <span> | </span>
             <a href="{{ url_for('logout') }}">sign out</a>
         </div>
@@ -968,7 +974,26 @@
                 ones.
             </p>
 
+            <h2>Sign in</h2>
+
+            <div id="local_logins">
+                <h4>Sign in with your GLOS Alerts account</h4>
+                <p>Signing in with a GLOS Alerts account is not required, but will allow you greater flexibility and provide access to additional GLOS tools and features.</p>
+                <form name="register" method="POST" action="{{ url_for('login_local') }}">
+                    <label for="email">What is your email address?</label>
+                    <input type="text" name="email" />
+                    <br />
+                    <label for="iamanewuser">Do you have a GLOS Alerts password?</label>
+                    <br />
+                    <input type="radio" name="iamanewuser" value="true" checked="checked" />No, I am a new user.<br />
+                    <input type="radio" name="iamanewuser" value="false"/>Yes, I have a password:
+                    <input type="password" name="password" id="password" /><a href="{{ url_for('forgot_password') }}" class="forgot_password">Forgot your password?</a><br />
+                    <input type="submit" name="submit" value="Sign in" />
+                </form>
+            </div>
+
             <div id="social_logins">
+                <h4>Prefer to use your Facebook or Google+ login?</h4>
                 <a href="{{ url_for('login_google') }}">
                     <img src="{{ url_for('.static', filename='images/google.png') }}" />
                 </a>
@@ -980,27 +1005,6 @@
                 <div class="clear"></div>
             </div>
 
-            <div id='logins'>
-                <h2>Prefer not to use a social login?</h2>
-                <div>
-                    <h3>Enter your email to create an account:</h3>
-                    <form name="register" method="POST" action="{{ url_for('signup') }}">
-                        <input type="text" name="email" />
-                        <input type="submit" name="submit" value="Create" />
-                    </form>
-                </div>
-                <div id="local">
-                    <h3>Already have an account?</h3>
-                    <form name="register" method="POST" action="{{ url_for('login_local') }}">
-                        <label for="email">Email</label>
-                        <input type="text" name="email" />
-                        <label for="password">Password</label>
-                        <input type="password" name="password" />
-                        <input type="submit" name="submit" value="Login" />
-                    </form>
-                </div>
-
-            </div>
             <div class="clear"></div>
 
         </div>
