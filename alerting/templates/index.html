@@ -108,14 +108,21 @@
                 updateAlert(alert, { buffer: parseInt($(this).val()) })
             })
 
-            // Make Name editable
-            $("#" + alert._id + "_h3 .alert_title").editable(function(value,settings) {
-                updateAlert(alert, { name: value });
-                return value;
-            }, {
-                onblur      : 'submit',
-                width       : 400
+            // Make icon trigger edit
+            $("#" + alert._id + "_h3 .alert_edit_img").click(function() {
+                $("#" + alert._id + "_h3 .alert_title").editable(function(value,settings) {
+                    updateAlert(alert, { name: value });
+                    return value;
+                }, {
+                    onblur      : 'submit',
+                    width       : 300
+                });
+                $("#" + alert._id + "_h3 .alert_title").click();
             });
+
+        }
+
+        function editAlertName(alert) {
 
         }
 
@@ -170,6 +177,7 @@
 
             return $("<div />")
                               .append($("<span />").attr("class","alert_title").html(alert.name))
+                              .append($("<img />").attr("class", "alert_edit_img").attr("src","{{ url_for('.static', filename='images/edit.png') }}"))
                               .append(del_link)
                               .append(status)
                               .append("<br />")
@@ -977,7 +985,7 @@
             <hr />
             <br />
 
-            <div id="local_logins">
+            <div class="logins" id="local_logins">
                 <h3>Sign in with your GLOS Alerts account</h3>
                 <p>Signing in with a GLOS Alerts account is not required, but will allow you greater flexibility and provide access to additional GLOS tools and features.</p>
                 <form name="register" method="POST" action="{{ url_for('login_local') }}">
@@ -999,7 +1007,7 @@
                 </form>
             </div>
 
-            <div id="social_logins">
+            <div class="logins" id="social_logins">
                 <h3>Sign in with Facebook or Google+</h3>
                 <p>We only use the below services to verify your email address. No additional information is ever collected or shared.</p>
                 <div id="login_buttons">
