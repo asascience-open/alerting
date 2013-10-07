@@ -54,12 +54,12 @@ form {
 }
 
     #messages .flash {
-        clear: both; 
-        background: #CEE5F5; 
-        padding: 0.5em; 
+        clear: both;
+        background: #CEE5F5;
+        padding: 0.5em;
         border: 1px solid #AACBE2;
-        width: 500px; 
-        margin: 10px auto; 
+        width: 500px;
+        margin: 10px auto;
         text-align: center;
     }
 
@@ -133,7 +133,7 @@ form {
     }
     #welcome #logins #local input[type=submit] {
         float: right;
-    }    
+    }
 
 
 #left_notes {
@@ -235,7 +235,7 @@ form {
     display: block;
     margin-left: 2px;
     background: url('/static/images/close-16.png') no-repeat;
-    float: right;   
+    float: right;
 }
 
 #page_wrapper {
@@ -270,14 +270,14 @@ form {
         font : 11px tahoma,helvetica,sans-serif;
         margin-bottom : 2px;
     }
-    
+
     #map_wrapper #map {
         height: 448px;
         width : 446px;
         border: 1px solid #A6C9E2;
     }
 
-.ui-autocomplete { position: absolute; cursor: default;z-index:3000 !important;}  
+.ui-autocomplete { position: absolute; cursor: default;z-index:3000 !important;}
 .ui-accordion .ui-accordion-content {
     padding: 1em;
     border-top: 0;
@@ -304,4 +304,18 @@ form {
     padding: 0 3px 0 3px;
     text-align : center;
     font-size : 12px;
+}
+
+/* TOOLTIPS */
+.ui-tooltip {
+    padding: 10px 20px;
+    color: black;
+    border-radius: 20px;
+    font: bold 14px "Helvetica Neue", Sans-Serif;
+    box-shadow: 0 0 7px black;
+}
+
+.tooltip_text {
+    text-decoration: underline;
+    cursor: pointer;
 }

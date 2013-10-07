@@ -156,7 +156,7 @@
                                             if ((contents.css("display") != "none") || (saved_alerts.length == 0)) {
                                                 syncMapWithAlert(null);
                                             }
-                                            
+
                                             header.remove();
                                             contents.remove();
                                             $( "#alerts" ).accordion( "refresh" );
@@ -185,7 +185,7 @@
             // this matches conditions with the correct station and lists them
             // under the station headings.  this is ugly.
             var last_station_id = null;
-            var last_station_dom = null;            
+            var last_station_dom = null;
             for (var j = 0 ; j < alert.conditions.length ; j++) {
                 var this_station_id = alert.conditions[j].station_id;
 
@@ -209,12 +209,12 @@
 
         function buildStationHeading(station_id) {
             station = findStationById(station_id);
-            var d = $('<li />').attr('id', station_id);             
+            var d = $('<li />').attr('id', station_id);
 
 
             var station_name = (station.provider + " - " + station.description)
             if (station_name.length > 50) {
-                station_name = station_name.slice(0,50) + "..."; 
+                station_name = station_name.slice(0,50) + "...";
             }
 
             // If there is a station link, create the link
@@ -239,7 +239,7 @@
             var root = $('<div />').attr("class", "condition");
 
             root.append($("<span />").html(cond.variable + " (" + cond.units + ") " + cond.comparator + " " + cond.value));
-            
+
             // Delete button
             root.append($("<a />")
                             .attr("class","condition_delete")
@@ -263,7 +263,7 @@
                                         for (var i = 0 ; i < saved_alerts[active_index].conditions.length ; i++) {
                                             if (saved_alerts[active_index].conditions[i]._id == cond._id) {
                                                 remove_index = i;
-                                                break;  
+                                                break;
                                             }
                                         }
                                         if (remove_index != -1) {
@@ -279,7 +279,7 @@
                         );
 
             var holder = $("<span />").css("float","right");
-            
+
             if (data.length > 1) {
                 var linechart = $("<span />").attr("class", "linechart");
                 first = new Date(Date.parse(times[0]));
@@ -326,7 +326,7 @@
             var root = $("<div />")
 
             var label = $("<label />").attr("for","station").text("Station");
-            
+
             var stat = $("<select />")
                             .attr("name", "station")
                             .on("change", function(e) { click_callback(e); });
@@ -382,7 +382,7 @@
                     var_select.trigger("change");
                     target.parent().parent().find("button[name=add]").removeAttr("disabled");
                 }
-                
+
             }));
 
             root.append($("<label />").attr("for", "variable").text("Variable"));
@@ -503,7 +503,7 @@
               }
 
               rows.push(
-                '<td align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>' 
+                '<td align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>'
                 + '<td align=right>' + obsVals.join('<br>') + '</td>'
                 + '<td><img width=16 height=16 src="' + alertImg + '"></td>'
               );
@@ -733,7 +733,7 @@
                               ,getGraphicWidthHeight : function(feature) {
                                   if (feature.attributes.count == 1) {
                                       if (feature.cluster[0].attributes.numAlertsTriggered > 0) {
-                                          return 24; 
+                                          return 24;
                                       }
                                       else if (feature.cluster[0].attributes.numAlertsWatched > 0) {
                                           return 24;
@@ -896,7 +896,7 @@
                 });
 
                 $("#alert_create_button").click(function() {
-                    $.post("{{ url_for('new_alert') }}", 
+                    $.post("{{ url_for('new_alert') }}",
                         $("#alert_form").serialize(),
                         function(alert) {
                             addAlert(alert);
@@ -904,7 +904,26 @@
                     );
                 });
 
+            {%- else %}
+
+                // Tooltip explaning what Alerts are
+                $( document ).tooltip( {
+                    position: {
+                        my: "center bottom-20",
+                        at: "center bottom",
+                        using: function( position, feedback ) {
+                          $( this ).css( position );
+                          $( "<div>" )
+                            .addClass( feedback.vertical )
+                            .addClass( feedback.horizontal )
+                            .appendTo( this );
+                        }
+                    }
+                });
+
             {%- endif -%}
+
+
         });
     </script>
 {% endblock %}
@@ -943,7 +962,10 @@
         <div id='welcome'>
             <h2>WELCOME!</h2>
             <p>
-                GLOS Alerts allows you to create alerts with different variables related to the water temperature, salinity, wave height and direction. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                This page allows you to create <span class="tooltip_text" title="Customized email messages to tell you when a particular parameter - such as water temperature - meets a specified condition for a specific location/station.">alerts</span> with different variables related to water
+                temperature, salinity, wave height and direction for the Great Lakes.  You may
+                bookmark this page and return anytime to manage existing alerts or create new
+                ones.
             </p>
 
             <div id="social_logins">
