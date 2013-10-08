@@ -72,7 +72,7 @@ def new_alert():
         args=(unicode(alert._id),),     # Arguments passed into function when executed
         interval=300,                   # Time before the function is called again, in seconds
         repeat=None,                    # Repeat this number of times (None means repeat forever)
-        result_ttl=600                  # How long to keep the results    
+        result_ttl=600                  # How long to keep the results
     )
 
     return jsonify(alert)
@@ -129,7 +129,13 @@ def new_condition(alert_id):
         c.variable = request.form.get("variable")
         c.units = request.form.get("units")
         c.comparator = request.form.get("comparator")
-        c.station_id = ObjectId(request.form.get("station"))
+
+        station_id = request.form.get("station")
+        if station_id is not None:
+            c.station_id = ObjectId(station_id)
+        else:
+            return jsonify({ "error" : "Error saving conditon, please check station" })
+
         try:
             c.save()
         except:
@@ -145,7 +151,7 @@ def new_condition(alert_id):
         c['triggering'] = len(c.check([c.times_and_data()[-1]])) > 0
 
         del c['updated']
-        
+
         return jsonify(c)
 
 @app.route('/alerts/<ObjectId:alert_id>/conditions/<ObjectId:condition_id>/destroy', methods=['POST'])

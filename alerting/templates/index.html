@@ -329,9 +329,11 @@
 
             var stat = $("<select />")
                             .attr("name", "station")
+                            .attr("disabled", "disabled")
                             .on("change", function(e) { click_callback(e); });
             // Set value to the index into the station array
             options = ""
+            options += "<option></option>";
             $.each(stations, function(i,s) {
                 options += "<option value='" + s._id + "'>" + s.provider + " - " + s.description + "</option>";
             });
@@ -418,8 +420,13 @@
                             .on("click", function(e) {
                                 e.preventDefault();
                                 var link =  $(this);
+
+                                // Add the disabled station field to the submitted data
+                                var submit_data = $("form[name=" + link.attr("id") + "]").serialize();
+                                submit_data += "&station=" + $("form[name=" + link.attr("id") + "]").find('select[name="station"]').val();
+
                                 $.post(alert.new_condition_url
-                                    ,$("form[name=" + link.attr("id") + "]").serialize()
+                                    ,submit_data
                                     ,function(condition) {
                                         if (condition["error"]) {
                                             $("#messages").html("<div class='flash'>" + condition["error"] + "</div>");
@@ -829,7 +836,8 @@
 
                 $( "#alerts" ).accordion(accordion_options);
                 $( "#alerts" ).on("accordionactivate", function(event, ui) {
-                    $(ui.newPanel).find("select[name=station]").trigger("change");
+                    // Uncommenting this will poulate the station (and thus other fields) on load.
+                    //$(ui.newPanel).find("select[name=station]").trigger("change");
                     $.sparkline_display_visible();
 
                     syncMapWithAlert(getActiveAlert() ,true);
@@ -900,6 +908,7 @@
 
                         // Stop alert spinners
                         $('#alert_spin').spin(false);
+                        $('#alert_spin').css("display","none");
                     });
                 });
 
