@@ -30,7 +30,7 @@ class Alert(Document):
         'active'            : bool          # If alerts should be SENT
     }
     required_fields = ['email', 'created', 'updated', 'frequency', 'buffer']
-    default_values = { 'name': u'Unnamed Alert', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 60, 'active' : True, 'buffer' : 60 }
+    default_values = { 'name': u'UnnamedAlertGroup', 'created': datetime.utcnow, 'updated' : datetime.utcnow, 'frequency' : 60, 'active' : True, 'buffer' : 60 }
 
     def user_friendly_frequency(self):
         return human(timedelta(minutes=self.frequency), precision=1, past_tense='{}')

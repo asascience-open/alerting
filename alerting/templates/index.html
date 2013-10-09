@@ -114,10 +114,6 @@
 
         }
 
-        function editAlertName(alert) {
-
-        }
-
         function buildAlertEdits(alert) {
 
             var root = $("<div />");
@@ -416,7 +412,7 @@
             root.append($("<button />")
                             .attr("name", "add")
                             .attr("id", alert._id)
-                            .html("Add")
+                            .html("Create alert")
                             .on("click", function(e) {
                                 e.preventDefault();
                                 var link =  $(this);
@@ -466,6 +462,15 @@
             });
         }
 
+        function classifyTable(element) {
+            $.each($(element).find("tr"), function(i,e) {
+                $.each($(e).find("td.popupCondition"), function(k,f) {
+                    new_class = i % 2 == 0 ? "even" : "odd";
+                    $(f).attr("class", $(f).attr("class") + " " +  new_class);
+                });
+            });
+        }
+
         function addAlert(alert) {
             if (alert["error"]) {
                $("#messages").html("<div class='flash'>" + alert["error"] + "</div>");
@@ -490,7 +495,7 @@
             for (var obsName in station.most_recent_obs) {
               if (!timeFound) {
                 timeFound = true;
-                rows.unshift('<td colspan=2>' + (new Date(Date.parse(station.most_recent_obs[obsName].time))).format("mmm d h:MM TT Z") + '</td>');
+                rows.unshift('<td colspan=3>' + (new Date(Date.parse(station.most_recent_obs[obsName].time))).format("mmm d h:MM TT Z") + '</td>');
                 lines++;
               }
               var obsVals = [];
@@ -510,29 +515,29 @@
               }
 
               rows.push(
-                '<td align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>'
-                + '<td align=right>' + obsVals.join('<br>') + '</td>'
-                + '<td><img width=16 height=16 src="' + alertImg + '"></td>'
+                '<td class="popupCondition" align=left><a href="javascript:gotoCondition(\'' + station._id + '\',\'' + obsName + '\')">' + obsName + '</a></td>'
+                + '<td class="popupCondition" align=right>' + obsVals.join('<br>') + '</td>'
+                + '<td class="popupCondition"><img width=16 height=16 src="' + alertImg + '"></td>'
               );
               lines += obsVals.length;
             }
-            rows.push('<td colspan=2 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
+            rows.push('<td colspan=3 align=center><font color=gray>Click on a sensor link to access alert settings.</font></td>');
             lines++;
-            rows.push('<td colspan=2 align=center><font color=gray>Click <a href="' + station.link + '" target=\'_blank\'>here</a> for station information.</font></td>');
+            rows.push('<td colspan=3 align=center><font color=gray>Click <a href="' + station.link + '" target=\'_blank\'>here</a> for station information.</font></td>');
             lines++;
           }
           else {
             rows.push('<td align=center><font color=gray>Click the icon to view sensor details.</font></td>');
             lines++;
           }
-          rows.unshift('<th colspan=2>' + station.provider + ' - ' + station.description + '</th>');
+          rows.unshift('<th colspan=3>' + station.provider + ' - ' + station.description + '</th>');
           lines++;
           var centroid = f.geometry.getCentroid();
           map.popup = new OpenLayers.Popup.FramedCloud(
              'popup'
             ,new OpenLayers.LonLat(centroid.x,centroid.y)
             ,null
-            ,'<table class="buoyPopup"><tr>' + rows.join('</tr><tr>') + '</tr></table>'
+            ,'<table cellspacing="0" class="buoyPopup"><tr>' + rows.join('</tr><tr>') + '</tr></table>'
             ,null
             ,showSensors
             ,function() {
@@ -544,7 +549,9 @@
           // map.popup.panMapIfOutOfView = false;
           map.popup.name = f.attributes.name;
           map.addPopup(map.popup,true);
+          classifyTable($(".buoyPopup"));
           map.popup.setSize(new OpenLayers.Size(275,(lines + 1.5) * 20));
+          gotoStation(station);
         }
 
         function recenterAndZoomToFeature(f) {
@@ -571,6 +578,8 @@
               }
             }
           }
+          // Now populat the stations dropdown if it needs to be.
+
         }
 
         function getActiveAlertIndex() {
@@ -596,22 +605,25 @@
             return active_alert;
         }
 
-        function gotoCondition(station_id, sensorName) {
-          // This should set the Condition values to the station and parameter that was clicked,
-          // allowing the user to quickly add an alert for this parameter.
-          active_alert = getActiveAlert();
-
-          if (active_alert == null) {
-            // THERE ARE NO ALERTS
+        function createNewAlert() {
             $.ajax({
                 type    : 'POST',
                 url     : "{{ url_for('new_alert') }}",
                 data    : $("#alert_form").serialize(),
                 async   : false,
-            }).done(function(alert) {
-                addAlert(alert);
-                active_alert = alert;
+            }).done(function(a) {
+                addAlert(a);
+                return a
             });
+        }
+
+        function gotoCondition(station_id, sensorName) {
+          // This should set the Condition values to the station and parameter that was clicked,
+          // allowing the user to quickly add an alert for this parameter.
+          active_alert = getActiveAlert();
+          if (active_alert == null) {
+            // THERE ARE NO ALERTS
+            active_alert = createNewAlert(active_alert);
           }
 
           var form_dom =  $("form[name=" + active_alert._id + "]")
@@ -627,7 +639,32 @@
           ).done(function() {
             form_dom.find("select[name=variable]").val(sensorName).trigger("change");
             form_dom.effect("highlight", {}, 1000);
-          })
+          });
+        }
+
+        function gotoStation(station) {
+          // This should set the Condition values to the station that was selected
+          // allowing the user to quickly add an alert for this station.
+          active_alert = getActiveAlert();
+          if (active_alert == null) {
+            // THERE ARE NO ALERTS
+            active_alert = createNewAlert(active_alert);
+          }
+
+          var form_dom =  $("form[name=" + active_alert._id + "]")
+          var station_dom =  form_dom.parent().find("#" + station._id);
+          if (station_dom.length > 0) {
+            // Highlight station listing
+            station_dom.effect("highlight", {}, 1000);
+          }
+
+          $.when(
+            // Populate condition fields with information
+            form_dom.find("select[name=station]").val(station._id).trigger("change")
+          ).done(function() {
+            form_dom.effect("highlight", {}, 1000);
+          });
+
         }
 
         function pokeMap() {
@@ -953,7 +990,6 @@
     {%- if user.is_active() -%}
 
         <div id='left_notes'>
-            <span><button id="alert_create_button">Click here</button> to get started by creating an alert</span>
         </div>
         <div id='right_notes'>
             <div>Signed in as {{ user.email }}</div>
@@ -963,16 +999,13 @@
             <span> | </span>
             <a href="{{ url_for('logout') }}">sign out</a>
         </div>
-
-        <div class='clear'></div>
-
+        <br />
         <div id="page_wrapper">
-            <div id='alerts_wrapper'>
-                <div class="generic_spinner" id="alert_spin"></div>
-                <div id="alerts"></div>
-            </div>
             <div id='map_wrapper'>
-                <div id="searchDiv">Search for a station: <input id="search"></div>
+                <h3>To get started, please search or locate a station below:</h3>
+                <h6>Search for a station</h6>
+                <input id="search"></input>
+                <h6>Locate a station</h6>
                 <div class="generic_spinner" id="station_spin"></div>
                 <div id="map"></div>
                 <div class="legend">
@@ -981,8 +1014,17 @@
                     <div><img src="{{ url_for('.static', filename='images/greytri.png') }}" /><span> - No conditions at this station are triggered</span></div>
                 </div>
             </div>
-            <div class="clear"></div>
+            <div id='alerts_wrapper'>
+                <div class="generic_spinner" id="alert_spin"></div>
+                <div id="alerts"></div>
+                <br />
+                <span>To add stations to a new group:
+                    <br />
+                    <button id="alert_create_button">Create a new Alert Group</button>
+                </span>
+            </div>
         </div>
+        <div class="clear"></div>
 
     {%- else -%}
 
