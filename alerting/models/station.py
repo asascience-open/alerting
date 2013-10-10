@@ -12,7 +12,7 @@ class Station(Document):
     use_schemaless = True
     use_dot_notation = True
     structure = {
-        'description'       : unicode,  
+        'description'       : unicode,
         'latitude'          : float,
         'longitude'         : float,
         'geometry'          : unicode, # WKT of the feature
@@ -33,17 +33,18 @@ class Station(Document):
     def most_recent_obs(self):
         recent = {}
         for var,units in self.variables().items():
-            last_times = self.times(variable=var)
-            if len(last_times) > 0:
-                recent[var] = { 'time' : last_times[-1] }
-            else:
-                recent[var] = {}
-            recent[var]['values'] = {}
+
+            recent[var] = {
+                            'time'   : None,
+                            'values' : {}
+                          }
 
             for u in units:
-                data = self.data(variable=var, units=u)
-                if len(data) > 0:
-                    recent[var]['values'][u] = data[-1]
+                times_and_data = self.times_and_data(variable=var, units=u)
+
+                if len(times_and_data) > 0:
+                    recent[var]['time'] = times_and_data[-1][0]
+                    recent[var]['values'][u] = times_and_data[-1][1]
                 else:
                     recent[var]['values'][u] = []
 
@@ -60,21 +61,6 @@ class Station(Document):
 
         return variables
 
-    def data(self, variable=None, units=None):
-        try:
-            return [float(x) for x in self.timeseries[variable][u'v'][units] if x not in Station.data_fill_values]
-        except:
-            return []
-
-    def times(self, variable=None):
-        d = []
-        try:
-            if variable not in Station.ignore_variables:
-                d = [datetime.fromtimestamp(x) for x in self.timeseries[variable][u't'] if x not in Station.time_fill_values]
-        except:
-            pass
-        return d
-
     def times_and_data(self, variable=None, units=None):
         d = []
         try:
@@ -82,8 +68,9 @@ class Station(Document):
                 d = [(datetime.fromtimestamp(t), float(d)) for t,d in zip(self.timeseries[variable][u't'], self.timeseries[variable][u'v'][units]) if d not in Station.data_fill_values and t not in Station.time_fill_values]
         except:
             pass
-        return d
-        
+        # Sort by time
+        return sorted(d, key=lambda x: x[0])
+
     def coordinates(self):
         try:
             geo = loads(self.geometry)

@@ -29,12 +29,6 @@ class Condition(Document):
     def station(self):
         return db.Station.find_one({ '_id' : self.station_id })
 
-    def data(self):
-        return self.station().data(variable=self.variable, units=self.units)
-
-    def times(self):
-        return self.station().times(variable=self.variable)
-
     def times_and_data(self):
         return self.station().times_and_data(variable=self.variable, units=self.units)
 

@@ -29,8 +29,9 @@ def alerts():
 
         for c in a.conditions:
             c['destroy_url'] = url_for('destroy_condition', alert_id=a['_id'], condition_id=c['_id'])
-            c['values'] = c.data()
-            c['times'] = c.times()
+            d = c.times_and_data()
+            c['values'] = [x[1] for x in d]
+            c['times'] = [x[0] for x in d]
             c['station_id'] = c.station()['_id']
             try:
                 c['triggering'] = len(c.check([c.times_and_data()[-1]])) > 0
@@ -145,10 +146,11 @@ def new_condition(alert_id):
         alert.save()
 
         c['destroy_url'] = url_for('destroy_condition', alert_id=alert['_id'], condition_id=c['_id'])
-        c['values'] = c.data()
-        c['times'] = c.times()
+        d = c.times_and_data()
+        c['values'] = [x[1] for x in d]
+        c['times'] = [x[0] for x in d]
         c['station_id'] = c.station()['_id']
-        c['triggering'] = len(c.check([c.times_and_data()[-1]])) > 0
+        c['triggering'] = len(c.check([d[-1]])) > 0
 
         del c['updated']
 
