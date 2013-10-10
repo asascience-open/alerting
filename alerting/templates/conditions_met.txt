@@ -7,7 +7,7 @@ All of the conditions for your alert "{{ alert.name }}" are being met.
     {%- for condition in station.conditions %}
         {{ condition.label() }}
         {%- for t,d in condition["values"] %}
-            {{ t | datetimeformat }} - {{ d }} {{condition.units}}
+            {{ t | datetimeformat(tz=tz) }} ({{ tz.zone }}) - {{ d }} {{condition.units}}
         {%- endfor %}
     {%- endfor %}
 {%- endfor %}

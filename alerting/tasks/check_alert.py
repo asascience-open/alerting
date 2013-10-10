@@ -1,3 +1,5 @@
+import pytz
+
 from bson.objectid import ObjectId
 from datetime import timedelta, datetime
 
@@ -21,7 +23,7 @@ def check(alert_id):
             app.logger.debug("No Alert found with that ID, cancelling job")
             scheduler.cancel(job)
             return "No Alert found with that ID, cancelling job"
-            
+
         user = db.User.find_one({ 'email' : alert.email })
         if user is None:
             scheduler.cancel(job)
@@ -39,7 +41,7 @@ def check(alert_id):
         else:
             can_send_next = datetime.fromtimestamp(0)
 
-        # Only send email if the alert is active and we have not sent 
+        # Only send email if the alert is active and we have not sent
         # an email within the requested frequency already.
         if not alert.active:
             app.logger.debug("Alert NOT sent.  Is not active.")
@@ -64,14 +66,14 @@ def check(alert_id):
             send("[GLOS Alerts] Conditions met",
                         app.config.get("MAIL_SENDER"),
                         [alert.email],
-                        render_template("conditions_met.txt", 
-                            alert=alert, data=data_to_send),
-                        render_template("conditions_met.html", 
-                            alert=alert, data=data_to_send))
+                        render_template("conditions_met.txt",
+                            alert=alert, data=data_to_send, tz=pytz.timezone(user.timezone)),
+                        render_template("conditions_met.html",
+                            alert=alert, data=data_to_send, tz=pytz.timezone(user.timezone)))
 
             alert.sent = datetime.utcnow()
             alert.save()
-            
+
             return "Alert sent"
 
         else:

@@ -23,10 +23,11 @@ class User(Document):
         'phone'             : unicode,
         'confirmed'         : bool,
         'confirmation_token': unicode,
+        'timezone'          : unicode,
         'created'           : datetime
     }
     required_fields = ['email']
-    default_values = { 'created' : datetime.utcnow, 'confirmed' : False }
+    default_values = { 'created' : datetime.utcnow, 'confirmed' : False, 'timezone' : u'America/New_York' }
     validators = {
         'email'     : validate_email
     }

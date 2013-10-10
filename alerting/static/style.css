@@ -171,6 +171,10 @@ form {
     text-align: right;
 }
 
+#timezone_select {
+    font-size: 10px;
+}
+
 .clear {
     clear: both;
 }

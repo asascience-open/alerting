@@ -1,6 +1,7 @@
 import uuid
+import pytz
 
-from flask import request, url_for, render_template, redirect, session, flash
+from flask import request, url_for, render_template, redirect, session, flash, jsonify
 from flask.ext.login import login_user, logout_user, current_user
 
 from alerting import db, app, facebook, google, queue
@@ -123,6 +124,20 @@ def forgot_password():
         else:
             flash("Email address '%s' does not exists in system.  Please create an account." % email)
             return redirect(url_for('forgot_password'))
+
+@app.route("/save_timezone", methods=["POST"])
+def save_timezone():
+    if current_user and current_user.is_active():
+        timezone = unicode(request.form.get("timezone")).strip()
+        if timezone in pytz.country_timezones("US"):
+            current_user.timezone = timezone
+            current_user.save()
+            return jsonify({ 'message' : 'Timezone updated.' })
+        else:
+            return jsonify({ 'message' : 'Unrecognized timezone, please try again.' })
+    else:
+        return jsonify({ 'message' : 'Error updating timezone, please try again.' })
+
 
 @app.route("/save_password", methods=["POST"])
 def save_password():

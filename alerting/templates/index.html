@@ -958,6 +958,15 @@
                     );
                 });
 
+                $("#timezone_select").change(function () {
+                    $.post("{{ url_for('save_timezone') }}",
+                        "timezone= " + $("#timezone_select").val(),
+                        function(message) {
+                            $("#messages").html("<div class='flash'>" + message['message'] + "</div>");
+                        }
+                    );
+                });
+
             {%- else %}
 
                 // Tooltip explaning what Alerts are
@@ -992,7 +1001,18 @@
         <div id='left_notes'>
         </div>
         <div id='right_notes'>
-            <div>Signed in as {{ user.email }}</div>
+            <div>
+                <span>Signed in as {{ user.email }} from </span>
+                <select id="timezone_select" name="timezone">
+                    {%- for t in timezones %}
+                        {%- if t == user.timezone %}
+                            <option value="{{t}}" selected="selected">{{t}}</option>
+                        {%- else %}
+                            <option value="{{t}}">{{t}}</option>
+                        {%- endif %}
+                    {%- endfor %}
+                </select>
+            </div>
             {%- if user.password != None %}
                 <a href="{{ url_for('set_password') }}">change / set password</a>
             {%- endif %}

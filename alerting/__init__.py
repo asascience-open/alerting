@@ -68,11 +68,17 @@ login_manager.init_app(app)
 # Create the Flask-Mail object
 mail = Mail(app)
 
-from datetime import datetime
+from datetime import datetime, tzinfo
+import pytz
 # Create datetime jinja2 filter
-def datetimeformat(value, format='%a, %b %d %Y at %I:%M%p'):
+def datetimeformat(value, format='%a, %b %d %Y at %I:%M%p', tz=None):
     if isinstance(value, datetime):
-        return value.strftime(format)
+        if tzinfo is not None and isinstance(tz, tzinfo):
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=pytz.utc)
+            return value.astimezone(tz).strftime(format)
+        else:
+            return value.strftime(format)
     return value
 app.jinja_env.filters['datetimeformat'] = datetimeformat
 

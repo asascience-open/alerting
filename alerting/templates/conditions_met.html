@@ -8,7 +8,7 @@
         <h2>{{ condition.label() }}</h2>
         <ul>
         {%- for t,d in condition["values"] %}
-            <li>{{ t | datetimeformat }} - {{ d }} {{condition.units}}</li>
+            <li>{{ t | datetimeformat(tz=tz) }} ({{ tz.zone }}) - {{ d }} {{condition.units}}</li>
         {%- endfor %}
         <ul>
     {%- endfor %}

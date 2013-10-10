@@ -1,3 +1,4 @@
+import pytz
 from datetime import datetime
 
 from flask import render_template, session, jsonify
@@ -11,7 +12,7 @@ from alerting.tasks.regulator import regulate
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', user=current_user)
+    return render_template('index.html', user=current_user, timezones=pytz.country_timezones("US"))
 
 def serialize_date(date):
     if date is not None:
