@@ -985,7 +985,7 @@
                 });
 
                 $("#password").focus(function() {
-                    $("input[name=iamanewuser]").last().trigger("click");
+                    $("input[name=iamanewuser]").first().trigger("click");
                 })
 
             {%- endif -%}
@@ -1069,11 +1069,11 @@
                     <br />
                     <label for="iamanewuser">Do you have a password?</label>
                     <ul>
-                        <li><input type="radio" name="iamanewuser" value="true" />No, I am a new user.<br />
                         <li>
                             <input type="radio" name="iamanewuser" value="false" checked="checked"/>Yes, I have a password:
                             <input type="password" name="password" id="password" />
                         </li>
+                        <li><input type="radio" name="iamanewuser" value="true" />No, I am a new user.<br />
                         <li>
                             <a href="{{ url_for('forgot_password') }}" class="forgot_password">Forgot your password?</a>
                             <input type="submit" name="submit" value="Sign in" />
