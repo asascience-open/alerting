@@ -135,12 +135,12 @@ def new_condition(alert_id):
         if station_id is not None:
             c.station_id = ObjectId(station_id)
         else:
-            return jsonify({ "error" : "Error saving conditon, please check station" })
+            return jsonify({ "error" : "Error saving condition, please check station" })
 
         try:
             c.save()
         except:
-            return jsonify({ "error" : "Error saving conditon, please check inputs" })
+            return jsonify({ "error" : "Error saving condition, please check inputs" })
 
         alert.conditions.append(c)
         alert.save()
