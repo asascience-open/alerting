@@ -871,6 +871,9 @@
                 map.addControl(selectCtl);
                 map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
 
+               // for some reason, we need to tap the map after it has initialized, esp. Chrome
+               setTimeout(function(){map.updateSize()},100);
+
                 $( "#alerts" ).accordion(accordion_options);
                 $( "#alerts" ).on("accordionactivate", function(event, ui) {
                     // Uncommenting this will poulate the station (and thus other fields) on load.
