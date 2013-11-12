@@ -19,20 +19,24 @@ def stations():
     if current_user is None:
     	return jsonify({ "error" : "Must be logged in" })
 
-    stations = db.Station.find()
-
     return_stations = []
 
-    for s in stations:
-        s['coordinates'] = s.coordinates()
-        s['most_recent_obs'] = s.most_recent_obs()
-        del s['updated']
-        del s['created']
-        del s['geometry']
-        del s['timeseries']
-        del s['type']
-        
-        return_stations.append(s)
+    # what is the latest updated date?
+    max_station = db.Station.find().sort([("updated",-1)]).limit(1)
+
+    # pull back only the latest batch
+    if max_station:
+        stations = db.Station.find({"updated" : max_station[0].updated})
+
+        for s in stations:
+            s['coordinates'] = s.coordinates()
+            s['most_recent_obs'] = s.most_recent_obs()
+            del s['updated']
+            del s['created']
+            del s['geometry']
+            del s['timeseries']
+            del s['type']
+            return_stations.append(s)
 
     return jsonify({ "stations" : return_stations })
 

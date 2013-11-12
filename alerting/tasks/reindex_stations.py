@@ -11,6 +11,7 @@ def reindex_stations():
     with app.app_context():
         url = "http://data.glos.us/portal/cachedObs.json"
         j = json.loads(urllib2.urlopen(url).read())
+        t = datetime.utcnow()
         for s in j:
             properties = s.get('properties')
             provider = properties.get('provider')
@@ -27,7 +28,7 @@ def reindex_stations():
             station.timeseries = properties.get("timeSeries")
             station.link = properties.get("url")
             station.type = properties.get("siteType")
-            station.updated = datetime.utcnow()
+            station.updated = t
 
             station.save()
 
