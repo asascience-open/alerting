@@ -872,7 +872,7 @@
                 map.setCenter(new OpenLayers.LonLat(-84.4,44.0).transform(proj4326,proj3857),6);
 
                // for some reason, we need to tap the map after it has initialized, esp. Chrome
-               setTimeout(function(){map.updateSize()},100);
+               setTimeout(function(){map.updateSize()},1000);
 
                 $( "#alerts" ).accordion(accordion_options);
                 $( "#alerts" ).on("accordionactivate", function(event, ui) {
