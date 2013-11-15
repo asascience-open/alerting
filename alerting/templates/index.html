@@ -571,9 +571,9 @@
             for (var j = 0 ; j < f[i].cluster.length; j++) {
               if (f[i].cluster[j].attributes._id == id) {
                 f[i].cluster[j].attributes.force = 1;
-                var centroid = f[i].geometry.getCentroid();
+                var centroid = f[i].cluster[j].geometry.getCentroid();
                 map.setCenter(new OpenLayers.LonLat(centroid.x,centroid.y),8);
-                popup(f[i],true);
+                popup(f[i].cluster[j],true);
                 return;
               }
             }
