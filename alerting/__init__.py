@@ -3,12 +3,13 @@ from flask.ext.mongokit import MongoKit
 from flask.ext.oauth import OAuth
 from flask.ext.login import LoginManager
 from flask.ext.mail import Mail
+from flask_environments import Environments
 
 # Create application object
 app = Flask(__name__)
+env = Environments(app)
+env.from_yaml('config.yml')
 
-app.config.from_object('alerting.defaults')
-app.config.from_envvar('APPLICATION_SETTINGS', silent=True)
 
 # Create logging
 if app.config.get('LOG_FILE') == True:
