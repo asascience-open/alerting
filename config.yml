@@ -1,0 +1,21 @@
+COMMON: &common
+  DEBUG: False
+  TESTING: False
+  WEB_PASSWORD: password
+  REDIS_URI: redis://localhost:6379/0
+  MONGO_URI: mongodb://localhost:27017/alerting_production
+  SECRET_KEY: 7e171069e61c44c8a79854881f378b03
+  GOOGLE_CLIENT_SECRET: xxxxxxxx
+  GOOGLE_CLIENT_ID: xxxxxxxx
+  FACEBOOK_APP_ID: xxxxxxxx
+  FACEBOOK_APP_SECRET: xxxxxxxx
+  LOG_FILE: False
+  MAIL_SERVER: email-smtp.us-east-1.amazonaws.com
+  MAIL_PORT: 25
+  MAIL_USERNAME: xxxxxxxx
+  MAIL_PASSWORD: xxxxxxxx
+  MAIL_SENDER: xxxxxxxx
+
+DEVELOPMENT: &development
+  <<: *common
+  DEBUG: True
