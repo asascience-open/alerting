@@ -1,9 +1,13 @@
 COMMON: &common
   DEBUG: False
+  HOST: localhost
+  PORT: 3000
   TESTING: False
   WEB_PASSWORD: password
-  REDIS_URI: redis://localhost:6379/0
-  MONGO_URI: mongodb://localhost:27017/alerting_production
+  REDIS_URL: redis://localhost:6379/0
+  MONGODB_HOST: localhost
+  MONGODB_PORT: 27017
+  MONGODB_DATABASE: alerting_production
   SECRET_KEY: 7e171069e61c44c8a79854881f378b03
   GOOGLE_CLIENT_SECRET: xxxxxxxx
   GOOGLE_CLIENT_ID: xxxxxxxx
@@ -19,3 +23,10 @@ COMMON: &common
 DEVELOPMENT: &development
   <<: *common
   DEBUG: True
+  MONGO_DATABASE: alerting_development
+
+PRODUCTION: &production
+  <<: *common
+  DEBUG: False
+  MONGO_DATABASE: alerting_production
+
