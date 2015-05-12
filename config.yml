@@ -15,10 +15,11 @@ COMMON: &common
   FACEBOOK_APP_SECRET: xxxxxxxx
   LOG_FILE: False
   MAIL_SERVER: email-smtp.us-east-1.amazonaws.com
-  MAIL_PORT: 25
-  MAIL_USERNAME: xxxxxxxx
+  MAIL_PORT: 587
+  MAIL_USE_TLS: True
   MAIL_PASSWORD: xxxxxxxx
   MAIL_SENDER: xxxxxxxx
+  MAIL_SENDER: alerts@glos.us
 
 DEVELOPMENT: &development
   <<: *common
