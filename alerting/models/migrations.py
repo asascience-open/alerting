@@ -9,6 +9,10 @@ class UserMigration(DocumentMigration):
         self.target = {'timezone':{'$exists': False}}
         self.update = {'$set':{'timezone': 'America/New_York'}}
 
+    def allmigration01__add_admin_to_users(self):
+        self.target = {'admin':{'$exists': False}}
+        self.update = {'$set':{'admin': False}}
+
 with app.app_context():
     migration = UserMigration(user.User)
     migration.migrate_all(collection=db['users'])
