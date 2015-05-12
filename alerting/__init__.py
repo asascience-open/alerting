@@ -1,6 +1,5 @@
 from flask import Flask
 from flask.ext.mongokit import MongoKit
-from flask.ext.oauth import OAuth
 from flask.ext.login import LoginManager
 from flask.ext.mail import Mail
 from flask_environments import Environments
