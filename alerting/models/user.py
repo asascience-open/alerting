@@ -24,7 +24,8 @@ class User(Document):
         'confirmed'         : bool,
         'confirmation_token': unicode,
         'timezone'          : unicode,
-        'created'           : datetime
+        'created'           : datetime,
+        'admin'             : bool
     }
     required_fields = ['email']
     default_values = { 'created' : datetime.utcnow, 'confirmed' : False, 'timezone' : u'America/New_York' }
